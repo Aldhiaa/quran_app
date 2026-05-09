@@ -8,7 +8,7 @@ workflows:
       xcode: latest
     scripts:
       - name: Generate platform directories
-        script: flutter create --platforms android --force .
+        script: yes | flutter create --platforms android .
       - name: Install dependencies
         script: flutter pub get
       - name: Build Android APK
@@ -26,7 +26,7 @@ workflows:
       xcode: latest
     scripts:
       - name: Generate platform directories
-        script: flutter create --platforms ios --force .
+        script: yes | flutter create --platforms ios .
       - name: Install dependencies
         script: flutter pub get
       - name: Build iOS
