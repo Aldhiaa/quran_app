@@ -25,7 +25,7 @@ class NotificationModel {
       title: json['title'] ?? '',
       subtitle: json['subtitle'],
       message: json['message'] ?? json['data']['message'] ?? json['data'],
-      isRead: json['is_read'] ?? json['read_at'] != null ?? false,
+      isRead: json['is_read'] ?? (json['read_at'] != null),
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
       type: json['type'],
       color: json['color'],

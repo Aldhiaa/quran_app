@@ -23,7 +23,7 @@ class GoalModel {
       title: json['title'] ?? '',
       description: json['description'],
       targetDate: json['target_date'] ?? json['deadline'] ?? '',
-      completed: json['completed'] ?? json['status'] == 'completed' ?? false,
+      completed: json['completed'] ?? (json['status'] == 'completed'),
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
       updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );

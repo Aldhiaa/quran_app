@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
+import 'package:quran_mobile_ui/core/app_theme.dart';
 import 'package:quran_mobile_ui/providers/auth_provider.dart';
 import 'package:quran_mobile_ui/services/auth_service.dart';
 import 'package:quran_mobile_ui/services/student_service.dart';
@@ -96,10 +97,7 @@ class QuranApp extends StatelessWidget {
               GlobalWidgetsLocalizations.delegate,
               GlobalCupertinoLocalizations.delegate,
             ],
-            theme: ThemeData(
-              colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-              useMaterial3: true,
-            ),
+            theme: buildAppTheme(),
             home: authProvider.isAuthenticated
                 ? const ScreenCatalogScreen()
                 : const LoginScreen(),

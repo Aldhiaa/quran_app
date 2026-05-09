@@ -51,6 +51,25 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  Future<void> loginDemo() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    await Future.delayed(const Duration(seconds: 1));
+    _user = StudentModel(
+      id: 1,
+      name: 'مستخدم تجريبي',
+      email: 'demo@quran.app',
+      progress: 0.65,
+      parts: '15',
+      status: 'نشط',
+      role: 'student',
+    );
+    _isAuthenticated = true;
+    _isLoading = false;
+    notifyListeners();
+  }
+
   Future<void> logout() async {
     await _authService.logout();
     _isAuthenticated = false;

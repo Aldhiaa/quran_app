@@ -22,7 +22,7 @@ class MessageModel {
       id: json['id'] ?? 0,
       senderName: json['sender_name'] ?? sender['name'] ?? json['name'] ?? '',
       content: json['content'] ?? json['body'] ?? json['last'] ?? '',
-      isRead: json['is_read'] ?? json['unread'] == false ?? false,
+      isRead: json['is_read'] ?? (json['unread'] == false),
       createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
       isFromTeacher: json['is_from_teacher'] ?? true,
     );
