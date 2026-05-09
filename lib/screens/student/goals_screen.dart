@@ -96,7 +96,7 @@ class _GoalsScreenState extends State<GoalsScreen> {
                                     subtitle: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        if (goal.description != null && goal.description.isNotEmpty)
+                                        if (goal.description != null && goal.description!.isNotEmpty)
                                           Text(
                                             goal.description!,
                                             style: const TextStyle(fontSize: 12, color: Colors.grey),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/app_theme.dart';
 import '../../services/communication_service.dart';
 import '../../models/notification_model.dart';
 import '../../widgets/common_widgets.dart';
@@ -105,7 +106,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                                           title: notification.title,
                                           subtitle: notification.subtitle ?? notification.message ?? '',
                                           icon: Icons.notifications_none_rounded,
-                                          color: !notification.isRead ? Colors.blue : null,
+                                          color: !notification.isRead ? Colors.blue : AppColors.primary,
                                         ),
                                       );
                                     },

@@ -1,7 +1,7 @@
 class DailyTaskModel {
   final int id;
   final String title;
-  final bool done;
+  bool done;
   final String? description;
   final DateTime? dueDate;
 
