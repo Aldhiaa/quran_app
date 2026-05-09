@@ -1,0 +1,33 @@
+workflows:
+  android-workflow:
+    name: Android Build
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Generate platform directories
+        script: flutter create --platforms android .
+      - name: Install dependencies
+        script: flutter pub get
+      - name: Build Android APK
+        script: flutter build apk --release
+    artifacts:
+      - build/**/outputs/**/*.apk
+      - build/**/outputs/**/*.aab
+
+  ios-workflow:
+    name: iOS Build
+    max_build_duration: 60
+    environment:
+      flutter: stable
+      xcode: latest
+    scripts:
+      - name: Generate platform directories
+        script: flutter create --platforms ios .
+      - name: Install dependencies
+        script: flutter pub get
+      - name: Build iOS
+        script: flutter build ios --release --no-codesign
+    artifacts:
+      - build/**/outputs/**/*.ipa
