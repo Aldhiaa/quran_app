@@ -6,10 +6,9 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-    working_directory: quran_mobile_ui
     scripts:
       - name: Generate platform directories
-        script: flutter create --platforms android .
+        script: flutter create --platforms android --force .
       - name: Install dependencies
         script: flutter pub get
       - name: Build Android APK
@@ -25,10 +24,9 @@ workflows:
     environment:
       flutter: stable
       xcode: latest
-    working_directory: quran_mobile_ui
     scripts:
       - name: Generate platform directories
-        script: flutter create --platforms ios .
+        script: flutter create --platforms ios --force .
       - name: Install dependencies
         script: flutter pub get
       - name: Build iOS
