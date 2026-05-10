@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/app_theme.dart';
 import '../../services/teacher_service.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -17,12 +18,47 @@ class _GradesEntryScreenState extends State<GradesEntryScreen> {
 
   String? _selectedTestId;
   String? _selectedStudentId;
-  final _memorizationCtrl = TextEditingController(text: '40');
-  final _recitationCtrl = TextEditingController(text: '45');
-  final _ahkamCtrl = TextEditingController(text: '25');
-  final _matnCtrl = TextEditingController(text: '18');
-  final _behaviorCtrl = TextEditingController(text: '48');
+  final _memorizationCtrl = TextEditingController(text: '0');
+  final _recitationCtrl = TextEditingController(text: '0');
+  final _ahkamCtrl = TextEditingController(text: '0');
+  final _matnCtrl = TextEditingController(text: '0');
+  final _behaviorCtrl = TextEditingController(text: '0');
   final _notesCtrl = TextEditingController();
+
+  static const _maxMemorization = 50;
+  static const _maxRecitation = 50;
+  static const _maxAhkam = 30;
+  static const _maxMatn = 20;
+  static const _maxBehavior = 50;
+  static const _totalMax = 200;
+
+  int _val(TextEditingController c) => int.tryParse(c.text) ?? 0;
+  int _clamp(int v, int max) => v < 0 ? 0 : (v > max ? max : v);
+
+  int get _total =>
+      _clamp(_val(_memorizationCtrl), _maxMemorization) +
+      _clamp(_val(_recitationCtrl), _maxRecitation) +
+      _clamp(_val(_ahkamCtrl), _maxAhkam) +
+      _clamp(_val(_matnCtrl), _maxMatn) +
+      _clamp(_val(_behaviorCtrl), _maxBehavior);
+
+  double get _percent => _total / _totalMax * 100;
+
+  String get _rating {
+    final p = _percent;
+    if (p >= 90) return 'ممتاز';
+    if (p >= 80) return 'جيد جداً';
+    if (p >= 70) return 'جيد';
+    if (p >= 60) return 'مقبول';
+    return 'ضعيف';
+  }
+
+  Color get _ratingColor {
+    final p = _percent;
+    if (p >= 80) return AppColors.success;
+    if (p >= 60) return AppColors.warning;
+    return AppColors.danger;
+  }
 
   List<Map<String, dynamic>> _tests = [];
   List<Map<String, dynamic>> _students = [];
@@ -31,6 +67,9 @@ class _GradesEntryScreenState extends State<GradesEntryScreen> {
   void initState() {
     super.initState();
     _loadData();
+    for (final c in [_memorizationCtrl, _recitationCtrl, _ahkamCtrl, _matnCtrl, _behaviorCtrl]) {
+      c.addListener(() => setState(() {}));
+    }
   }
 
   Future<void> _loadData() async {
@@ -52,22 +91,18 @@ class _GradesEntryScreenState extends State<GradesEntryScreen> {
     if (_selectedTestId == null || _selectedStudentId == null) return;
     setState(() => _loading = true);
 
-    final score = (int.tryParse(_memorizationCtrl.text) ?? 0)
-        + (int.tryParse(_recitationCtrl.text) ?? 0)
-        + (int.tryParse(_ahkamCtrl.text) ?? 0)
-        + (int.tryParse(_matnCtrl.text) ?? 0)
-        + (int.tryParse(_behaviorCtrl.text) ?? 0);
-
     try {
       await _teacherService.saveTestResults(int.parse(_selectedTestId!), [
         {
           'student_id': int.parse(_selectedStudentId!),
-          'memorization_score': int.tryParse(_memorizationCtrl.text) ?? 0,
-          'recitation_score': int.tryParse(_recitationCtrl.text) ?? 0,
-          'ahkam_score': int.tryParse(_ahkamCtrl.text) ?? 0,
-          'matn_score': int.tryParse(_matnCtrl.text) ?? 0,
-          'behavior_score': int.tryParse(_behaviorCtrl.text) ?? 0,
-          'total_score': score,
+          'memorization_score': _clamp(_val(_memorizationCtrl), _maxMemorization),
+          'recitation_score': _clamp(_val(_recitationCtrl), _maxRecitation),
+          'ahkam_score': _clamp(_val(_ahkamCtrl), _maxAhkam),
+          'matn_score': _clamp(_val(_matnCtrl), _maxMatn),
+          'behavior_score': _clamp(_val(_behaviorCtrl), _maxBehavior),
+          'total_score': _total,
+          'percentage': double.parse(_percent.toStringAsFixed(2)),
+          'rating': _rating,
           'notes': _notesCtrl.text,
         },
       ]);
@@ -181,6 +216,38 @@ class _GradesEntryScreenState extends State<GradesEntryScreen> {
               maxLines: 3,
               decoration: const InputDecoration(labelText: 'ملاحظات (اختياري)'),
             ),
+            const SizedBox(height: 12),
+            Card(
+              color: _ratingColor.withValues(alpha: 0.08),
+              child: Padding(
+                padding: const EdgeInsets.all(14),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('المجموع', style: TextStyle(color: Colors.grey)),
+                        Text('$_total / 200',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
+                        Text('${_percent.toStringAsFixed(1)}%',
+                            style: const TextStyle(color: Colors.grey)),
+                      ],
+                    ),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text('التقدير', style: TextStyle(color: Colors.grey)),
+                        Text(_rating,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 20, color: _ratingColor)),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 80),
           ],
         ),
         bottomNavigationBar: PrimaryBottomButton(

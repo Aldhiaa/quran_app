@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../services/student_service.dart';
-import '../../services/teacher_service.dart';
 import '../../models/daily_task_model.dart';
 import '../../widgets/common_widgets.dart';
 import '../../providers/auth_provider.dart';
@@ -32,12 +31,11 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
     });
 
     try {
-      final teacherService = TeacherService();
       final studentService = Provider.of<StudentService>(context, listen: false);
 
       final results = await Future.wait([
-        teacherService.getDashboardStats(),
-        studentService.getDailyTasks(),
+        studentService.getStudentSummary(),
+        studentService.getDailyTasks().catchError((_) => <DailyTaskModel>[]),
       ]);
 
       setState(() {
@@ -61,6 +59,7 @@ class _StudentDashboardScreenState extends State<StudentDashboardScreen> {
           onRefresh: _loadData,
           child: AppShell(
             title: 'الرئيسية',
+            showBack: false,
             body: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _errorMessage != null

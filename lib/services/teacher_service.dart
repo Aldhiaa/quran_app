@@ -16,7 +16,7 @@ class TeacherService {
   }
 
   Future<Map<String, dynamic>> getTeacherSummary() async {
-    final data = await _authGet('${ApiConstants.baseUrl}/teacher/summary');
+    final data = await _authGet(ApiConstants.teacherSummary);
     return data;
   }
 
@@ -45,6 +45,44 @@ class TeacherService {
 
   Future<Map<String, dynamic>> saveTestResults(int testId, List<Map<String, dynamic>> results) async {
     return await _authPost('${ApiConstants.baseUrl}/monthly-tests/$testId/results', {'results': results});
+  }
+
+  Future<List<Map<String, dynamic>>> getCircleStudents(int circleId) async {
+    final data = await _authGet('${ApiConstants.circles}/$circleId/students');
+    return _extractList(data);
+  }
+
+  Future<Map<String, dynamic>> submitAttendance({
+    required int circleId,
+    required String date,
+    required List<Map<String, dynamic>> entries,
+  }) async {
+    return await _authPost(ApiConstants.attendanceBulk, {
+      'circle_id': circleId,
+      'date': date,
+      'entries': entries,
+    });
+  }
+
+  Future<Map<String, dynamic>> submitSessionEntries({
+    required int sessionId,
+    required List<Map<String, dynamic>> entries,
+  }) async {
+    return await _authPost('${ApiConstants.dailySessions}/$sessionId/entries', {
+      'entries': entries,
+    });
+  }
+
+  Future<Map<String, dynamic>> submitWeeklyEvaluation(Map<String, dynamic> body) async {
+    return await _authPost(ApiConstants.weeklyEvaluations, body);
+  }
+
+  Future<Map<String, dynamic>> createHomework(Map<String, dynamic> body) async {
+    return await _authPost(ApiConstants.homework, body);
+  }
+
+  Future<Map<String, dynamic>> createTeacherNote(Map<String, dynamic> body) async {
+    return await _authPost(ApiConstants.teacherNotes, body);
   }
 
   Future<Map<String, dynamic>> getCirclesWithStudents() async {

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import 'package:provider/provider.dart';
+import '../../services/student_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class MemorizationFileScreen extends StatefulWidget {
@@ -10,7 +11,6 @@ class MemorizationFileScreen extends StatefulWidget {
 }
 
 class _MemorizationFileScreenState extends State<MemorizationFileScreen> {
-  final TeacherService _teacherService = TeacherService();
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _stats;
@@ -28,7 +28,8 @@ class _MemorizationFileScreenState extends State<MemorizationFileScreen> {
     });
 
     try {
-      final stats = await _teacherService.getDashboardStats();
+      final svc = Provider.of<StudentService>(context, listen: false);
+      final stats = await svc.getStudentSummary();
       setState(() {
         _stats = stats;
         _isLoading = false;
@@ -39,12 +40,6 @@ class _MemorizationFileScreenState extends State<MemorizationFileScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
   }
 
   @override

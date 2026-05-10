@@ -82,7 +82,17 @@ class _DailyFollowupScreenState extends State<DailyFollowupScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: InfoTile(
-                          title: 'إضافة تقرير يومي لطالبة',
+                          title: 'تسجيل الحضور',
+                          subtitle: 'حاضر، متأخر، بعذر، غائب',
+                          icon: Icons.how_to_reg_outlined,
+                          onTap: () => Navigator.pushNamed(context, '/teacher/attendance-entry'),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: InfoTile(
+                          title: 'إدخال تقرير الجلسة',
                           subtitle: 'حفظ، مراجعة، تلاوة، سلوك',
                           icon: Icons.note_add_outlined,
                           onTap: () => Navigator.pushNamed(context, '/teacher/daily-report-entry'),

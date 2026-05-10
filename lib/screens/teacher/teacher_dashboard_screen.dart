@@ -55,6 +55,7 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
       builder: (context, authProvider, _) {
         return AppShell(
           title: 'الرئيسية',
+          showBack: false,
           actions: [IconButton(
             onPressed: () => Navigator.pushNamed(context, '/common/notifications'),
             icon: const Icon(Icons.notifications_none_rounded),

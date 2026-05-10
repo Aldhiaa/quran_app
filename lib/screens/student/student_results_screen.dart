@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import 'package:provider/provider.dart';
+import '../../services/student_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class StudentResultsScreen extends StatefulWidget {
@@ -10,7 +11,6 @@ class StudentResultsScreen extends StatefulWidget {
 }
 
 class _StudentResultsScreenState extends State<StudentResultsScreen> {
-  final TeacherService _teacherService = TeacherService();
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _summary;
@@ -28,7 +28,8 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
     });
 
     try {
-      final summary = await _teacherService.getTeacherSummary();
+      final svc = Provider.of<StudentService>(context, listen: false);
+      final summary = await svc.getStudentSummary();
       setState(() {
         _summary = summary;
         _isLoading = false;
@@ -42,12 +43,6 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
   }
 
   @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     final avg = _summary?['monthly_test_average'];
     final progress = avg != null ? (avg as num).toDouble() / 100 : 0.0;
@@ -56,6 +51,7 @@ class _StudentResultsScreenState extends State<StudentResultsScreen> {
       onRefresh: _loadData,
       child: AppShell(
         title: 'نتائجي',
+        showBack: false,
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null

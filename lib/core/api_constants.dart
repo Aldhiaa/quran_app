@@ -26,4 +26,33 @@ class ApiConstants {
 
   // Dashboard endpoints
   static const dashboardStats = '$baseUrl/dashboard/stats';
+  static const teacherSummary = '$baseUrl/teacher/summary';
+  static const studentSummary = '$baseUrl/student/summary';
+
+  // Circles & students
+  static const circles = '$baseUrl/circles';
+  static const students = '$baseUrl/students';
+
+  // Daily sessions
+  static const dailySessions = '$baseUrl/daily-sessions';
+
+  // Attendance
+  static const attendanceBulk = '$baseUrl/attendance/bulk';
+
+  // Weekly evaluation
+  static const weeklyEvaluations = '$baseUrl/weekly-evaluations';
+
+  // Monthly tests / grades
+  static const monthlyTests = '$baseUrl/monthly-tests';
+
+  // Homework
+  static const homework = '$baseUrl/homework';
+  static const studentHomework = '$baseUrl/student/homework';
+
+  // Teacher notes
+  static const teacherNotes = '$baseUrl/teacher-notes';
+  static const studentTeacherNotes = '$baseUrl/student/teacher-notes';
+
+  // Plan
+  static const studentPlan = '$baseUrl/student/plan';
 }

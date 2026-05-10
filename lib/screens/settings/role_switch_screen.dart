@@ -26,8 +26,7 @@ class _RoleSwitchScreenState extends State<RoleSwitchScreen> {
 
     return AppShell(
       title: 'تبديل الدور',
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: ListView(
         children: [
           Card(
             child: Padding(

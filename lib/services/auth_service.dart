@@ -87,6 +87,32 @@ class AuthService {
 
   Future<String?> getToken() async => _storage.read(key: 'token');
 
+  Future<bool> updateProfile({required String name, required String email}) async {
+    try {
+      final token = await _storage.read(key: 'token');
+      if (token == null) return false;
+      final response = await _httpClient.put(
+        Uri.parse(ApiConstants.me),
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({'name': name, 'email': email}),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map && data['user'] != null) {
+          await _storage.write(key: 'user', value: jsonEncode(data['user']));
+        }
+        return true;
+      }
+      return false;
+    } catch (_) {
+      return false;
+    }
+  }
+
   Future<void> _storeAuthData(Map<String, dynamic> data) async {
     await _storage.write(key: 'token', value: data['token']);
     await _storage.write(key: 'user', value: jsonEncode(data['user']));

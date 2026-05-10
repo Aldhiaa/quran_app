@@ -11,6 +11,7 @@ class AuthProvider with ChangeNotifier {
 
   bool _isLoading = false;
   bool _isAuthenticated = false;
+  bool _isDemo = false;
   String? _errorMessage;
   StudentModel? _user;
 
@@ -24,8 +25,10 @@ class AuthProvider with ChangeNotifier {
 
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _isAuthenticated;
+  bool get isDemo => _isDemo;
   String? get errorMessage => _errorMessage;
   StudentModel? get user => _user;
+  String get role => _user?.role ?? 'student';
 
   StudentService get studentService => _studentService;
   CommunicationService get communicationService => _communicationService;
@@ -51,28 +54,41 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  Future<void> loginDemo() async {
+  Future<void> loginDemo({String role = 'student'}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    await Future.delayed(const Duration(seconds: 1));
+    await Future.delayed(const Duration(milliseconds: 400));
     _user = StudentModel(
       id: 1,
-      name: 'مستخدم تجريبي',
+      name: role == 'teacher' ? 'معلم تجريبي' : 'طالب تجريبي',
       email: 'demo@quran.app',
       progress: 0.65,
       parts: '15',
       status: 'نشط',
-      role: 'student',
+      role: role,
     );
     _isAuthenticated = true;
+    _isDemo = true;
     _isLoading = false;
     notifyListeners();
   }
 
+  Future<void> refreshUser() async {
+    if (_isDemo) return;
+    try {
+      final userData = await _authService.getCurrentUser();
+      if (userData != null) {
+        _user = StudentModel.fromJson(userData);
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
   Future<void> logout() async {
-    await _authService.logout();
+    if (!_isDemo) await _authService.logout();
     _isAuthenticated = false;
+    _isDemo = false;
     _user = null;
     _errorMessage = null;
     notifyListeners();

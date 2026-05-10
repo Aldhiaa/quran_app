@@ -8,7 +8,7 @@ class CommunicationHubScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppShell(
       title: 'التواصل',
-      body: Column(
+      body: ListView(
         children: [
           InfoTile(
             title: 'إعلانات المؤسسة',

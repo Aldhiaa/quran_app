@@ -8,7 +8,7 @@ class SupportScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return AppShell(
       title: 'المساعدة والدعم',
-      body: Column(
+      body: ListView(
         children: [
           InfoTile(
             title: 'الأسئلة الشائعة',

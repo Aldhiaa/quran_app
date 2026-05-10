@@ -76,7 +76,7 @@ ThemeData buildAppTheme() {
     ),
     chipTheme: ChipThemeData(
       backgroundColor: Colors.white,
-      selectedColor: AppColors.primary.withOpacity(.1),
+      selectedColor: AppColors.primary.withValues(alpha: .1),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       labelStyle: const TextStyle(color: AppColors.text),
       side: const BorderSide(color: Color(0xFFEAE6DE)),

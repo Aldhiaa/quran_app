@@ -52,8 +52,7 @@ class ScreenCatalogScreen extends StatelessWidget {
 
     return AppShell(
       title: 'جميع شاشات التطبيق',
-      body: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      body: ListView(
         children: [
           const AppSectionTitle(title: 'شاشات المعلم'),
           ...teacher.map((e) => Padding(

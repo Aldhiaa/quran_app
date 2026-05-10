@@ -17,7 +17,7 @@ class _AppSettingsScreenState extends State<AppSettingsScreen> {
   Widget build(BuildContext context) {
     return AppShell(
       title: 'الإعدادات',
-      body: Column(
+      body: ListView(
         children: [
           InfoTile(
             title: 'الملف الشخصي',

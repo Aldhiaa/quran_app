@@ -53,6 +53,7 @@ class _HalaqatScreenState extends State<HalaqatScreen> {
       onRefresh: _loadCircles,
       child: AppShell(
         title: 'حلقاتي',
+        showBack: false,
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null

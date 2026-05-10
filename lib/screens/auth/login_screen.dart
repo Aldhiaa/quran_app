@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/common_widgets.dart';
 
@@ -28,6 +29,20 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  void _goHome(BuildContext context, String role) {
+    final route = role == 'teacher' ? '/teacher/home' : '/student/home';
+    Navigator.pushNamedAndRemoveUntil(context, route, (_) => false);
+  }
+
+  Future<void> _login(BuildContext context, AuthProvider auth) async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
+    if (email.isEmpty || password.isEmpty) return;
+    await auth.login(email, password);
+    if (!mounted) return;
+    if (auth.isAuthenticated) _goHome(context, auth.role);
+  }
+
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
@@ -42,12 +57,12 @@ class _LoginScreenState extends State<LoginScreen> {
             children: [
               const SizedBox(height: 40),
               const Text(
-                'القرآن الكريم',
+                'تعليم القرآن الكريم',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 32,
+                  fontSize: 30,
                   fontWeight: FontWeight.bold,
-                  color: Colors.deepPurple,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 8),
@@ -77,15 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
               CustomButton(
                 text: 'تسجيل الدخول',
                 isLoading: authProvider.isLoading,
-                onPressed: authProvider.isLoading
-                    ? () {}
-                    : () {
-                        final email = _emailController.text.trim();
-                        final password = _passwordController.text;
-                        if (email.isNotEmpty && password.isNotEmpty) {
-                          authProvider.login(email, password);
-                        }
-                      },
+                onPressed: authProvider.isLoading ? () {} : () => _login(context, authProvider),
               ),
               const SizedBox(height: 16),
               if (authProvider.errorMessage != null)
@@ -95,19 +102,37 @@ class _LoginScreenState extends State<LoginScreen> {
                   textAlign: TextAlign.center,
                 ),
               const SizedBox(height: 20),
-              TextButton(
-                onPressed: () => authProvider.loginDemo(),
-                child: const Text('تجربة التطبيق بدون اتصال'),
+              const Divider(),
+              const SizedBox(height: 8),
+              const Text(
+                'تجربة بدون اتصال',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: Colors.grey, fontSize: 12),
               ),
-              if (authProvider.errorMessage != null)
-                Padding(
-                  padding: const EdgeInsets.only(top: 8),
-                  child: Text(
-                    'قد يكون الخادم غير متاح حالياً. استخدم زر "تجربة التطبيق بدون اتصال" أعلاه.',
-                    style: const TextStyle(color: Colors.grey, fontSize: 12),
-                    textAlign: TextAlign.center,
+              const SizedBox(height: 8),
+              Row(children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.school_outlined),
+                    label: const Text('كمعلم'),
+                    onPressed: () async {
+                      await authProvider.loginDemo(role: 'teacher');
+                      if (mounted) _goHome(context, 'teacher');
+                    },
                   ),
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: OutlinedButton.icon(
+                    icon: const Icon(Icons.person_outline),
+                    label: const Text('كطالب'),
+                    onPressed: () async {
+                      await authProvider.loginDemo(role: 'student');
+                      if (mounted) _goHome(context, 'student');
+                    },
+                  ),
+                ),
+              ]),
             ],
           ),
         ),

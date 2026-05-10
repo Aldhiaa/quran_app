@@ -190,10 +190,13 @@ class CommunicationService {
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
         final items = _extractItems(data);
-        return items.map((item) => {
-          'id': item['id'] ?? item['user_id'],
-          'name': item['name'] ?? item['user']['name'] ?? 'طالب',
-          'role': 'student',
+        return items.map((item) {
+          final user = item['user'] is Map ? item['user'] as Map : const {};
+          return {
+            'id': item['id'] ?? item['user_id'] ?? user['id'],
+            'name': item['name'] ?? user['name'] ?? 'طالب',
+            'role': 'student',
+          };
         }).toList();
       }
       return [];

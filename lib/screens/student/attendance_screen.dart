@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import 'package:provider/provider.dart';
+import '../../services/student_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class AttendanceScreen extends StatefulWidget {
@@ -10,7 +11,6 @@ class AttendanceScreen extends StatefulWidget {
 }
 
 class _AttendanceScreenState extends State<AttendanceScreen> {
-  final TeacherService _teacherService = TeacherService();
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _summary;
@@ -28,7 +28,8 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
     });
 
     try {
-      final summary = await _teacherService.getTeacherSummary();
+      final svc = Provider.of<StudentService>(context, listen: false);
+      final summary = await svc.getStudentSummary();
       setState(() {
         _summary = summary;
         _isLoading = false;
@@ -39,12 +40,6 @@ class _AttendanceScreenState extends State<AttendanceScreen> {
         _isLoading = false;
       });
     }
-  }
-
-  @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
   }
 
   @override

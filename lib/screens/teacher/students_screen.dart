@@ -62,6 +62,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
       onRefresh: _loadStudents,
       child: AppShell(
         title: 'طلابي',
+        showBack: false,
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null
@@ -109,7 +110,7 @@ class _StudentsScreenState extends State<StudentsScreen> {
                                               value: progress > 0 ? progress : null,
                                               minHeight: 7,
                                               borderRadius: BorderRadius.circular(100),
-                                              backgroundColor: AppColors.secondary.withOpacity(.2),
+                                              backgroundColor: AppColors.secondary.withValues(alpha: .2),
                                               valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                                             ),
                                           ],

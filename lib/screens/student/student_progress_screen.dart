@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import 'package:provider/provider.dart';
+import '../../services/student_service.dart';
 import '../../widgets/common_widgets.dart';
 
 class StudentProgressScreen extends StatefulWidget {
@@ -10,7 +11,6 @@ class StudentProgressScreen extends StatefulWidget {
 }
 
 class _StudentProgressScreenState extends State<StudentProgressScreen> {
-  final TeacherService _teacherService = TeacherService();
   bool _isLoading = true;
   String? _errorMessage;
   Map<String, dynamic>? _stats;
@@ -28,7 +28,8 @@ class _StudentProgressScreenState extends State<StudentProgressScreen> {
     });
 
     try {
-      final stats = await _teacherService.getDashboardStats();
+      final svc = Provider.of<StudentService>(context, listen: false);
+      final stats = await svc.getStudentSummary();
       setState(() {
         _stats = stats;
         _isLoading = false;
@@ -42,17 +43,12 @@ class _StudentProgressScreenState extends State<StudentProgressScreen> {
   }
 
   @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: _loadData,
       child: AppShell(
         title: 'تقدمي',
+        showBack: false,
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null

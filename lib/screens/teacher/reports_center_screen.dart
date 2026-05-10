@@ -43,6 +43,7 @@ class _ReportsCenterScreenState extends State<ReportsCenterScreen> {
       onRefresh: _loadSummary,
       child: AppShell(
         title: 'تقارير الحلقة',
+        showBack: false,
         body: _isLoading
             ? const Center(child: CircularProgressIndicator())
             : _errorMessage != null

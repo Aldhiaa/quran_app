@@ -20,16 +20,27 @@ class NotificationModel {
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
+    final data = json['data'];
+    String? msg = json['message'];
+    if (msg == null && data is Map) msg = data['message']?.toString();
+    if (msg == null && data is String) msg = data;
     return NotificationModel(
-      id: json['id'] ?? 0,
-      title: json['title'] ?? '',
-      subtitle: json['subtitle'],
-      message: json['message'] ?? json['data']['message'] ?? json['data'],
-      isRead: json['is_read'] ?? (json['read_at'] != null),
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : DateTime.now(),
-      type: json['type'],
-      color: json['color'],
+      id: json['id'] is int ? json['id'] : int.tryParse('${json['id']}') ?? 0,
+      title: json['title']?.toString() ?? '',
+      subtitle: json['subtitle']?.toString(),
+      message: msg,
+      isRead: json['is_read'] == true || json['read_at'] != null,
+      createdAt: _safeParse(json['created_at']),
+      type: json['type']?.toString(),
+      color: json['color']?.toString(),
     );
+  }
+
+  static DateTime _safeParse(dynamic v) {
+    if (v is String && v.isNotEmpty) {
+      return DateTime.tryParse(v) ?? DateTime.now();
+    }
+    return DateTime.now();
   }
 
   Map<String, dynamic> toJson() {

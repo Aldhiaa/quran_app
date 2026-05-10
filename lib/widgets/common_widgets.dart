@@ -59,7 +59,7 @@ class InfoTile extends StatelessWidget {
     return Card(
       child: ListTile(
         onTap: onTap,
-        leading: CircleAvatar(backgroundColor: color.withOpacity(.1), child: Icon(icon, color: color)),
+        leading: CircleAvatar(backgroundColor: color.withValues(alpha: .1), child: Icon(icon, color: color)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700)),
         subtitle: Text(subtitle),
         trailing: const Icon(Icons.chevron_left_rounded),
@@ -96,7 +96,7 @@ class ProgressCard extends StatelessWidget {
                       CircularProgressIndicator(
                         value: value,
                         strokeWidth: 9,
-                        backgroundColor: AppColors.secondary.withOpacity(.2),
+                        backgroundColor: AppColors.secondary.withValues(alpha: .2),
                         valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                       ),
                       Center(child: Text('$percent%', style: const TextStyle(fontWeight: FontWeight.bold))),
@@ -114,7 +114,7 @@ class ProgressCard extends StatelessWidget {
                         value: value,
                         minHeight: 8,
                         borderRadius: BorderRadius.circular(50),
-                        backgroundColor: AppColors.secondary.withOpacity(.2),
+                        backgroundColor: AppColors.secondary.withValues(alpha: .2),
                         valueColor: const AlwaysStoppedAnimation(AppColors.primary),
                       ),
                     ],
@@ -135,15 +135,28 @@ class AppShell extends StatelessWidget {
   final List<Widget>? actions;
   final Widget? floatingActionButton;
   final Widget? bottomNavigationBar;
-  const AppShell({super.key, required this.title, required this.body, this.actions, this.floatingActionButton, this.bottomNavigationBar});
+  final bool showBack;
+  const AppShell({
+    super.key,
+    required this.title,
+    required this.body,
+    this.actions,
+    this.floatingActionButton,
+    this.bottomNavigationBar,
+    this.showBack = true,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text(title), actions: actions),
+      appBar: AppBar(
+        title: Text(title),
+        actions: actions,
+        automaticallyImplyLeading: showBack,
+      ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
           child: body,
         ),
       ),
@@ -184,7 +197,7 @@ class ScreenMenuCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              CircleAvatar(backgroundColor: AppColors.primary.withOpacity(.12), child: Icon(icon, color: AppColors.primary)),
+              CircleAvatar(backgroundColor: AppColors.primary.withValues(alpha: .12), child: Icon(icon, color: AppColors.primary)),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(

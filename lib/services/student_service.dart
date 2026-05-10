@@ -127,6 +127,103 @@ class StudentService {
     }
   }
 
+  Future<Map<String, dynamic>> getStudentSummary() async {
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('غير مصرح به');
+      final response = await _httpClient.get(
+        Uri.parse(ApiConstants.studentSummary),
+        headers: _headers(token),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data is Map<String, dynamic> ? data : {};
+      }
+      return {};
+    } on SocketException {
+      throw Exception('لا يوجد اتصال بالإنترنت');
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<Map<String, dynamic>> getStudentPlan() async {
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('غير مصرح به');
+      final response = await _httpClient.get(
+        Uri.parse(ApiConstants.studentPlan),
+        headers: _headers(token),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data is Map<String, dynamic> ? data : {};
+      }
+      return {};
+    } on SocketException {
+      throw Exception('لا يوجد اتصال بالإنترنت');
+    } catch (_) {
+      return {};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getHomework() async {
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('غير مصرح به');
+      final response = await _httpClient.get(
+        Uri.parse(ApiConstants.studentHomework),
+        headers: _headers(token),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return _extractItems(data).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      return [];
+    } on SocketException {
+      throw Exception('لا يوجد اتصال بالإنترنت');
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> updateHomeworkStatus(int homeworkId, String status, {String? note}) async {
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('غير مصرح به');
+      final response = await _httpClient.post(
+        Uri.parse('${ApiConstants.studentHomework}/$homeworkId/status'),
+        headers: _headers(token),
+        body: jsonEncode({'status': status, if (note != null) 'note': note}),
+      );
+      if (response.statusCode != 200 && response.statusCode != 201) {
+        throw Exception('فشل تحديث حالة الواجب');
+      }
+    } on SocketException {
+      throw Exception('لا يوجد اتصال بالإنترنت');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getTeacherNotes() async {
+    try {
+      final token = await _getToken();
+      if (token == null) throw Exception('غير مصرح به');
+      final response = await _httpClient.get(
+        Uri.parse(ApiConstants.studentTeacherNotes),
+        headers: _headers(token),
+      );
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return _extractItems(data).map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+      return [];
+    } on SocketException {
+      throw Exception('لا يوجد اتصال بالإنترنت');
+    } catch (_) {
+      return [];
+    }
+  }
+
   Future<StudentModel> getStudentProfile() async {
     try {
       final token = await _getToken();

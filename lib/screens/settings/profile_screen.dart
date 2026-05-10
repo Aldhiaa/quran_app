@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/app_theme.dart';
+import '../../services/auth_service.dart';
 import '../../widgets/common_widgets.dart';
 import '../../providers/auth_provider.dart';
 
@@ -30,6 +32,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.dispose();
   }
 
+  Future<void> _save() async {
+    setState(() => _saving = true);
+    try {
+      final auth = AuthService();
+      final ok = await auth.updateProfile(
+        name: _nameController.text.trim(),
+        email: _emailController.text.trim(),
+      );
+      if (!mounted) return;
+      if (ok) {
+        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('تم حفظ التغييرات')),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('فشل الحفظ')),
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('خطأ: $e')),
+      );
+    } finally {
+      if (mounted) setState(() => _saving = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Consumer<AuthProvider>(
@@ -37,14 +68,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         final user = auth.user;
         return AppShell(
           title: 'الملف الشخصي',
-          body: Column(
+          body: ListView(
             children: [
               CircleAvatar(
                 radius: 36,
-                backgroundColor: Colors.deepPurple.shade100,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
                 child: Text(
-                  (user?.name ?? '?').substring(0, 1),
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.deepPurple),
+                  (user?.name?.isNotEmpty == true ? user!.name : '?').substring(0, 1),
+                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primary),
                 ),
               ),
               const SizedBox(height: 6),
@@ -72,7 +103,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           bottomNavigationBar: PrimaryBottomButton(
             title: _saving ? 'جاري الحفظ...' : 'حفظ التغييرات',
-            onPressed: _saving ? null : () {},
+            onPressed: _saving ? null : _save,
           ),
         );
       },
