@@ -74,19 +74,19 @@ class _LoginScreenState extends State<LoginScreen> {
                 obscureText: true,
               ),
               const SizedBox(height: 24),
-              if (authProvider.isLoading)
-                const Center(child: CircularProgressIndicator())
-              else
-                CustomButton(
-                  text: 'تسجيل الدخول',
-                  onPressed: () {
-                    final email = _emailController.text.trim();
-                    final password = _passwordController.text;
-                    if (email.isNotEmpty && password.isNotEmpty) {
-                      authProvider.login(email, password);
-                    }
-                  },
-                ),
+              CustomButton(
+                text: 'تسجيل الدخول',
+                isLoading: authProvider.isLoading,
+                onPressed: authProvider.isLoading
+                    ? () {}
+                    : () {
+                        final email = _emailController.text.trim();
+                        final password = _passwordController.text;
+                        if (email.isNotEmpty && password.isNotEmpty) {
+                          authProvider.login(email, password);
+                        }
+                      },
+              ),
               const SizedBox(height: 16),
               if (authProvider.errorMessage != null)
                 Text(

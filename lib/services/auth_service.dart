@@ -14,7 +14,10 @@ class AuthService {
     try {
       final response = await _httpClient.post(
         Uri.parse(ApiConstants.token),
-        headers: {'Content-Type': 'application/json'},
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
         body: jsonEncode({
           'email': email,
           'password': password,
@@ -30,8 +33,10 @@ class AuthService {
         final body = jsonDecode(response.body);
         throw Exception(body['message'] ?? 'فشل تسجيل الدخول: ${response.statusCode}');
       }
-    } on SocketException catch (_) {
-      throw Exception('لا يوجد اتصال بالإنترنت');
+    } on SocketException catch (e) {
+      throw Exception('فشل الاتصال بالخادم: ${e.message}');
+    } on http.ClientException catch (e) {
+      throw Exception('فشل الاتصال بالخادم: ${e.message}');
     } on FormatException catch (_) {
       throw Exception('خطأ في استجابة الخادم');
     } catch (e) {

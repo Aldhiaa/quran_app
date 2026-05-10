@@ -74,11 +74,13 @@ class AuthProvider with ChangeNotifier {
     await _authService.logout();
     _isAuthenticated = false;
     _user = null;
+    _errorMessage = null;
     notifyListeners();
   }
 
   Future<void> checkAuthStatus() async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
