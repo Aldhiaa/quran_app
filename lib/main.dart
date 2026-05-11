@@ -11,6 +11,8 @@ import 'package:quran_mobile_ui/screens/auth/login_screen.dart';
 import 'package:quran_mobile_ui/screens/common/splash_screen.dart';
 import 'package:quran_mobile_ui/screens/common/teacher_shell.dart';
 import 'package:quran_mobile_ui/screens/common/student_shell.dart';
+import 'package:quran_mobile_ui/screens/common/supervisor_shell.dart';
+import 'package:quran_mobile_ui/screens/common/guide_shell.dart';
 import 'package:quran_mobile_ui/screens/common/screen_catalog_screen.dart';
 import 'package:quran_mobile_ui/screens/common/communication_hub_screen.dart';
 import 'package:quran_mobile_ui/screens/common/announcements_screen.dart';
@@ -43,6 +45,36 @@ import 'package:quran_mobile_ui/screens/teacher/exam_result_detail_screen.dart';
 import 'package:quran_mobile_ui/screens/teacher/grades_entry_screen.dart';
 import 'package:quran_mobile_ui/screens/teacher/reports_center_screen.dart';
 import 'package:quran_mobile_ui/screens/teacher/attendance_entry_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_dashboard_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_centers_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_center_detail_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_teachers_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_circles_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_attendance_alerts_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_visits_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_visit_form_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_educational_supervision_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_weekly_review_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_monthly_approval_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_risk_cases_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_parent_communication_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_reports_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_tasks_screen.dart';
+import 'package:quran_mobile_ui/screens/supervisor/supervisor_requests_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_dashboard_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_centers_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_supervisors_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_circles_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_visits_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_visit_form_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_plans_review_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_educational_supervision_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_model_circle_evaluation_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_training_needs_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_training_plan_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_recommendations_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_monthly_approval_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_reports_screen.dart';
 import 'package:quran_mobile_ui/screens/settings/app_settings_screen.dart';
 import 'package:quran_mobile_ui/screens/settings/profile_screen.dart';
 import 'package:quran_mobile_ui/screens/settings/support_screen.dart';
@@ -93,7 +125,7 @@ class QuranApp extends StatelessWidget {
         Provider<TeacherService>.value(value: teacherService),
       ],
       child: MaterialApp(
-        title: 'تعليم القرآن الكريم',
+        title: 'حلق القرآن',
         debugShowCheckedModeBanner: false,
         locale: const Locale('ar'),
         supportedLocales: const [Locale('ar'), Locale('en')],
@@ -107,10 +139,12 @@ class QuranApp extends StatelessWidget {
         routes: {
           '/': (context) => const SplashScreen(),
           '/login': (context) => const LoginScreen(),
-          // Role-based homes (bottom-tab shells)
+          // Role homes
           '/teacher/home': (context) => const TeacherShell(),
           '/student/home': (context) => const StudentShell(),
-          // Catalog (debug)
+          '/supervisor/home': (context) => const SupervisorShell(),
+          '/guide/home': (context) => const GuideShell(),
+          // Catalog
           '/catalog': (context) => const ScreenCatalogScreen(),
           // Common
           '/common/communication': (context) => const CommunicationHubScreen(),
@@ -146,6 +180,38 @@ class QuranApp extends StatelessWidget {
           '/teacher/exam-result-detail': (context) => const ExamResultDetailScreen(),
           '/teacher/grades-entry': (context) => const GradesEntryScreen(),
           '/teacher/reports-center': (context) => const ReportsCenterScreen(),
+          // Supervisor
+          '/supervisor/dashboard': (context) => const SupervisorDashboardScreen(),
+          '/supervisor/centers': (context) => const SupervisorCentersScreen(),
+          '/supervisor/center-detail': (context) => const SupervisorCenterDetailScreen(),
+          '/supervisor/teachers': (context) => const SupervisorTeachersScreen(),
+          '/supervisor/circles': (context) => const SupervisorCirclesScreen(),
+          '/supervisor/attendance-alerts': (context) => const SupervisorAttendanceAlertsScreen(),
+          '/supervisor/visits': (context) => const SupervisorVisitsScreen(),
+          '/supervisor/visits/create': (context) => const SupervisorVisitFormScreen(),
+          '/supervisor/educational-supervision': (context) => const SupervisorEducationalSupervisionScreen(),
+          '/supervisor/weekly-review': (context) => const SupervisorWeeklyReviewScreen(),
+          '/supervisor/monthly-approval': (context) => const SupervisorMonthlyApprovalScreen(),
+          '/supervisor/student-risk-cases': (context) => const SupervisorRiskCasesScreen(),
+          '/supervisor/parent-communication': (context) => const SupervisorParentCommunicationScreen(),
+          '/supervisor/reports': (context) => const SupervisorReportsScreen(),
+          '/supervisor/tasks': (context) => const SupervisorTasksScreen(),
+          '/supervisor/requests': (context) => const SupervisorRequestsScreen(),
+          // Guide
+          '/guide/dashboard': (context) => const GuideDashboardScreen(),
+          '/guide/centers': (context) => const GuideCentersScreen(),
+          '/guide/supervisors': (context) => const GuideSupervisorsScreen(),
+          '/guide/circles': (context) => const GuideCirclesScreen(),
+          '/guide/visits': (context) => const GuideVisitsScreen(),
+          '/guide/visits/create': (context) => const GuideVisitFormScreen(),
+          '/guide/plans-review': (context) => const GuidePlansReviewScreen(),
+          '/guide/educational-supervision': (context) => const GuideEducationalSupervisionScreen(),
+          '/guide/model-circle-evaluation': (context) => const GuideModelCircleEvaluationScreen(),
+          '/guide/training-needs': (context) => const GuideTrainingNeedsScreen(),
+          '/guide/training-plan': (context) => const GuideTrainingPlanScreen(),
+          '/guide/recommendations': (context) => const GuideRecommendationsScreen(),
+          '/guide/monthly-tests': (context) => const GuideMonthlyApprovalScreen(),
+          '/guide/reports': (context) => const GuideReportsScreen(),
           // Settings
           '/settings/app': (context) => const AppSettingsScreen(),
           '/settings/profile': (context) => const ProfileScreen(),

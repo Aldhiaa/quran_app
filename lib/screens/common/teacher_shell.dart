@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common_widgets.dart';
 import '../teacher/teacher_dashboard_screen.dart';
 import '../teacher/halaqat_screen.dart';
 import '../teacher/students_screen.dart';
@@ -8,20 +10,18 @@ import '../teacher/reports_center_screen.dart';
 
 class TeacherShell extends StatefulWidget {
   const TeacherShell({super.key});
-
   @override
   State<TeacherShell> createState() => _TeacherShellState();
 }
 
 class _TeacherShellState extends State<TeacherShell> {
   int _index = 0;
-
   static const _pages = <Widget>[
     TeacherDashboardScreen(),
     HalaqatScreen(),
     StudentsScreen(),
     ReportsCenterScreen(),
-    _MoreScreen(role: 'teacher'),
+    MoreScreen(role: 'teacher'),
   ];
 
   @override
@@ -32,7 +32,7 @@ class _TeacherShellState extends State<TeacherShell> {
         selectedIndex: _index,
         onDestinationSelected: (i) => setState(() => _index = i),
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.dashboard_rounded), label: 'الرئيسية'),
+          NavigationDestination(icon: Icon(Icons.home_rounded), label: 'الرئيسية'),
           NavigationDestination(icon: Icon(Icons.menu_book_rounded), label: 'الحلقات'),
           NavigationDestination(icon: Icon(Icons.groups_rounded), label: 'الطلاب'),
           NavigationDestination(icon: Icon(Icons.assessment_rounded), label: 'التقارير'),
@@ -43,58 +43,74 @@ class _TeacherShellState extends State<TeacherShell> {
   }
 }
 
-class _MoreScreen extends StatelessWidget {
+class MoreScreen extends StatelessWidget {
   final String role;
-  const _MoreScreen({required this.role});
+  const MoreScreen({super.key, required this.role});
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
     final items = <_MoreItem>[
-      const _MoreItem('التواصل', Icons.hub_rounded, '/common/communication'),
-      const _MoreItem('الإشعارات', Icons.notifications_rounded, '/common/notifications'),
-      const _MoreItem('الإعلانات', Icons.campaign_rounded, '/common/announcements'),
-      const _MoreItem('الملف الشخصي', Icons.person_rounded, '/settings/profile'),
-      const _MoreItem('الإعدادات', Icons.settings_rounded, '/settings/app'),
-      const _MoreItem('الدعم', Icons.support_agent_rounded, '/settings/support'),
-      const _MoreItem('عن التطبيق', Icons.info_rounded, '/settings/about'),
+      _MoreItem('الملف الشخصي', Icons.person_rounded, '/settings/profile', AppColors.primary),
+      _MoreItem('التواصل', Icons.hub_rounded, '/common/communication', AppColors.info),
+      _MoreItem('الإشعارات', Icons.notifications_rounded, '/common/notifications', AppColors.warning),
+      _MoreItem('الإعلانات', Icons.campaign_rounded, '/common/announcements', AppColors.accentGold),
+      _MoreItem('الإعدادات', Icons.settings_rounded, '/settings/app', AppColors.muted),
+      _MoreItem('الدعم', Icons.support_agent_rounded, '/settings/support', AppColors.success),
+      _MoreItem('عن التطبيق', Icons.info_rounded, '/settings/about', AppColors.info),
+      _MoreItem('تبديل الدور', Icons.swap_horiz_rounded, '/settings/role-switch', AppColors.primaryDark),
     ];
 
-    return Scaffold(
-      appBar: AppBar(title: const Text('المزيد')),
-      body: SafeArea(
-        child: ListView.separated(
-          padding: const EdgeInsets.all(16),
-          itemCount: items.length + 1,
-          separatorBuilder: (_, __) => const SizedBox(height: 8),
-          itemBuilder: (context, i) {
-            if (i == items.length) {
-              return Padding(
-                padding: const EdgeInsets.only(top: 16),
-                child: OutlinedButton.icon(
-                  icon: const Icon(Icons.logout, color: Colors.red),
-                  label: const Text('تسجيل الخروج', style: TextStyle(color: Colors.red)),
-                  onPressed: () async {
-                    await Provider.of<AuthProvider>(context, listen: false).logout();
-                    if (context.mounted) {
-                      Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
-                    }
-                  },
+    return GreenHeaderScaffold(
+      title: 'المزيد',
+      showBack: false,
+      headerExtra: RoleDashboardHeader(
+        name: auth.user?.name ?? 'المستخدم',
+        role: _roleLabel(role),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
+        children: [
+          ...items.map((it) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: InfoTile(
+                  title: it.title,
+                  subtitle: '',
+                  icon: it.icon,
+                  color: it.color,
+                  onTap: () => Navigator.pushNamed(context, it.route),
                 ),
-              );
-            }
-            final it = items[i];
-            return Card(
-              child: ListTile(
-                leading: Icon(it.icon),
-                title: Text(it.title),
-                trailing: const Icon(Icons.chevron_left_rounded),
-                onTap: () => Navigator.pushNamed(context, it.route),
-              ),
-            );
-          },
-        ),
+              )),
+          const SizedBox(height: 8),
+          OutlinedButton.icon(
+            icon: const Icon(Icons.logout_rounded, color: AppColors.danger),
+            label: const Text('تسجيل الخروج', style: TextStyle(color: AppColors.danger)),
+            style: OutlinedButton.styleFrom(side: const BorderSide(color: AppColors.danger)),
+            onPressed: () async {
+              await auth.logout();
+              if (context.mounted) {
+                Navigator.pushNamedAndRemoveUntil(context, '/login', (_) => false);
+              }
+            },
+          ),
+        ],
       ),
     );
+  }
+
+  static String _roleLabel(String r) {
+    switch (r) {
+      case 'teacher':
+        return 'معلم';
+      case 'student':
+        return 'طالب';
+      case 'center_supervisor':
+        return 'مشرف مركز';
+      case 'guide':
+        return 'موجهة';
+      default:
+        return 'مستخدم';
+    }
   }
 }
 
@@ -102,5 +118,6 @@ class _MoreItem {
   final String title;
   final IconData icon;
   final String route;
-  const _MoreItem(this.title, this.icon, this.route);
+  final Color color;
+  const _MoreItem(this.title, this.icon, this.route, this.color);
 }

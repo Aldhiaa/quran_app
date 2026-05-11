@@ -1,121 +1,115 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../../services/teacher_service.dart';
+import '../../core/app_theme.dart';
 import '../../widgets/common_widgets.dart';
-import '../../providers/auth_provider.dart';
 
-class StudentDetailScreen extends StatefulWidget {
+class StudentDetailScreen extends StatelessWidget {
   const StudentDetailScreen({super.key});
 
   @override
-  State<StudentDetailScreen> createState() => _StudentDetailScreenState();
-}
-
-class _StudentDetailScreenState extends State<StudentDetailScreen> {
-  final TeacherService _teacherService = TeacherService();
-  bool _isLoading = true;
-  String? _errorMessage;
-  List<Map<String, dynamic>> _students = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadStudents();
-  }
-
-  Future<void> _loadStudents() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final students = await _teacherService.getStudents();
-      setState(() {
-        _students = students;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final firstStudent = _students.isNotEmpty ? _students.first : null;
-    final name = firstStudent?['name'] ?? firstStudent?['full_name'] ?? 'طالب';
-    final level = firstStudent?['current_level'] ?? firstStudent?['parts'] ?? '--';
-    final progress = (firstStudent?['progress'] ?? 0).toDouble();
-
-    return Consumer<AuthProvider>(
-      builder: (context, authProvider, _) {
-        return RefreshIndicator(
-          onRefresh: _loadStudents,
-          child: AppShell(
-            title: 'تفاصيل الطالب',
-            body: _isLoading
-                ? const Center(child: CircularProgressIndicator())
-                : _errorMessage != null || _students.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(_errorMessage ?? 'لا توجد بيانات', style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                            const SizedBox(height: 16),
-                            ElevatedButton(onPressed: _loadStudents, child: const Text('إعادة المحاولة')),
-                          ],
-                        ),
-                      )
-                    : ListView(
-                        children: [
-                          Card(
-                            child: Padding(
-                              padding: const EdgeInsets.all(18),
-                              child: Row(
-                                children: [
-                                  const CircleAvatar(radius: 28, child: Icon(Icons.person_rounded)),
-                                  const SizedBox(width: 14),
-                                  Expanded(
-                                    child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                                      Text(name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                      const SizedBox(height: 4),
-                                      Text('المستوى: $level', style: Theme.of(context).textTheme.bodySmall),
-                                    ]),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: ProgressCard(title: 'التقدم', value: progress > 0 ? progress : 0.5, footer: 'مستمر في التعلم'),
-                          ),
-                          const SizedBox(height: 12),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Row(children: const [
-                              StatCard(label: 'الحفظ', value: '--'),
-                              const SizedBox(width: 10),
-                              StatCard(label: 'المراجعة', value: '--'),
-                              const SizedBox(width: 10),
-                              StatCard(label: 'السلوك', value: '--'),
-                            ]),
-                          ),
-                        ],
-                      ),
+    return GreenHeaderScaffold(
+      title: 'ملف الطالب',
+      headerExtra: AppCard(
+        color: Colors.white.withValues(alpha: .12),
+        padding: const EdgeInsets.all(12),
+        child: Row(children: [
+          Container(
+            width: 52,
+            height: 52,
+            decoration: BoxDecoration(
+              color: Colors.white.withValues(alpha: .12),
+              shape: BoxShape.circle,
+              border: Border.all(color: AppColors.accentGold, width: 1.5),
+            ),
+            alignment: Alignment.center,
+            child: const Icon(Icons.person_rounded, color: Colors.white, size: 26),
           ),
-        );
-      },
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('أحمد محمد العتيبي',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+                SizedBox(height: 4),
+                Text('حلقة البقرة • الجزء 5',
+                    style: TextStyle(color: Colors.white70, fontSize: 12.5)),
+              ],
+            ),
+          ),
+          const StatusBadge(text: 'متفوق', kind: BadgeKind.success),
+        ]),
+      ),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        children: [
+          const KpiGrid(items: [
+            KpiCard(label: 'متوسط الحفظ', value: '92٪', icon: Icons.menu_book_rounded, color: AppColors.primary),
+            KpiCard(label: 'الحضور', value: '96٪', icon: Icons.check_circle_rounded, color: AppColors.success),
+            KpiCard(label: 'الاختبارات', value: '5', icon: Icons.assignment_rounded, color: AppColors.info),
+            KpiCard(label: 'التقييم', value: '4.5', icon: Icons.star_rounded, color: AppColors.accentGold),
+          ]),
+          const SizedBox(height: 14),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('التقدم في الحفظ', style: TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 12),
+                Row(children: const [
+                  ProgressRing(value: .92, size: 70),
+                  SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('الجزء 5 من القرآن', style: TextStyle(fontWeight: FontWeight.w700)),
+                        SizedBox(height: 4),
+                        Text('آخر تسميع: سورة النساء • الآية 23',
+                            style: TextStyle(color: AppColors.muted, fontSize: 12)),
+                      ],
+                    ),
+                  ),
+                ]),
+              ],
+            ),
+          ),
+          const SizedBox(height: 14),
+          const AppSectionTitle(title: 'الإجراءات'),
+          const SizedBox(height: 10),
+          InfoTile(
+            title: 'تسجيل تسميع',
+            subtitle: 'تسميع جديد لليوم',
+            icon: Icons.record_voice_over_rounded,
+            color: AppColors.primary,
+            onTap: () => Navigator.pushNamed(context, '/teacher/daily-followup'),
+          ),
+          const SizedBox(height: 10),
+          InfoTile(
+            title: 'تقييم أسبوعي',
+            subtitle: 'إدخال تقييم لهذا الأسبوع',
+            icon: Icons.fact_check_rounded,
+            color: AppColors.info,
+            onTap: () => Navigator.pushNamed(context, '/teacher/weekly-evaluation'),
+          ),
+          const SizedBox(height: 10),
+          InfoTile(
+            title: 'نتيجة الاختبار الشهري',
+            subtitle: 'عرض / إدخال الدرجات',
+            icon: Icons.grade_rounded,
+            color: AppColors.accentGold,
+            onTap: () => Navigator.pushNamed(context, '/teacher/grades-entry'),
+          ),
+          const SizedBox(height: 10),
+          InfoTile(
+            title: 'متابعة طالب ضعيف',
+            subtitle: 'خطة معالجة وتوصيات',
+            icon: Icons.priority_high_rounded,
+            color: AppColors.danger,
+            onTap: () {},
+          ),
+        ],
+      ),
     );
   }
 }

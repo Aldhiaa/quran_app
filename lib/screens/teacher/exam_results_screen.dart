@@ -1,92 +1,92 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import '../../core/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 
-class ExamResultsScreen extends StatefulWidget {
+class ExamResultsScreen extends StatelessWidget {
   const ExamResultsScreen({super.key});
 
   @override
-  State<ExamResultsScreen> createState() => _ExamResultsScreenState();
-}
-
-class _ExamResultsScreenState extends State<ExamResultsScreen> {
-  final TeacherService _teacherService = TeacherService();
-  bool _isLoading = true;
-  String? _errorMessage;
-  List<Map<String, dynamic>> _tests = [];
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-  }
-
-  Future<void> _loadData() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final tests = await _teacherService.getMonthlyTests();
-      setState(() {
-        _tests = tests;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _loadData,
-      child: AppShell(
-        title: 'نتائج الطلاب',
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _loadData, child: const Text('إعادة المحاولة')),
-                      ],
-                    ),
-                  )
-                : _tests.isEmpty
-                    ? const Center(child: Text('لا توجد اختبارات', style: TextStyle(fontSize: 16, color: Colors.grey)))
-                    : ListView.builder(
-                        itemCount: _tests.length,
-                        itemBuilder: (context, index) {
-                          final test = _tests[index];
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 10),
-                            child: Card(
-                              child: ListTile(
-                                onTap: () => Navigator.pushNamed(context, '/teacher/exam-result-detail'),
-                                leading: CircleAvatar(child: Text('${index + 1}')),
-                                title: Text('${test['circle']?['name'] ?? 'اختبار'} ${test['month'] ?? ''}'),
-                                subtitle: Text('الحالة: ${test['status'] ?? ''}'),
-                                trailing: const Icon(Icons.chevron_left_rounded),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
+    final rows = [
+      _R('أحمد العتيبي', 86, 'ممتاز', AppColors.success),
+      _R('عبدالله القحطاني', 72, 'جيد جداً', AppColors.primary),
+      _R('محمد الدوسري', 58, 'مقبول', AppColors.warning),
+      _R('سعد الشهري', 78, 'جيد جداً', AppColors.primary),
+      _R('فيصل الزهراني', 44, 'ضعيف', AppColors.danger),
+    ];
+
+    return GreenHeaderScaffold(
+      title: 'نتائج الاختبار',
+      headerExtra: AppCard(
+        color: Colors.white.withValues(alpha: .12),
+        padding: const EdgeInsets.all(12),
+        child: Row(children: [
+          ProgressRing(
+            value: .68,
+            size: 60,
+            strokeWidth: 7,
+            color: AppColors.accentGold,
+            trackColor: Colors.white.withValues(alpha: .25),
+            label: '68٪',
+          ),
+          const SizedBox(width: 12),
+          const Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('اختبار شهر شعبان',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                SizedBox(height: 4),
+                Text('متوسط النتائج • 24 طالب',
+                    style: TextStyle(color: Colors.white70, fontSize: 12)),
+              ],
+            ),
+          ),
+        ]),
+      ),
+      child: ListView.separated(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        itemCount: rows.length,
+        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        itemBuilder: (_, i) => AppCard(
+          onTap: () => Navigator.pushNamed(context, '/teacher/exam-result-detail'),
+          padding: const EdgeInsets.all(12),
+          child: Row(children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: rows[i].color.withValues(alpha: .15),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text('${rows[i].score}',
+                  style: TextStyle(fontWeight: FontWeight.w800, color: rows[i].color)),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(rows[i].name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 3),
+                  Text(rows[i].grade,
+                      style: TextStyle(color: rows[i].color, fontWeight: FontWeight.w700, fontSize: 12)),
+                ],
+              ),
+            ),
+            const Icon(Icons.chevron_left_rounded, color: AppColors.muted),
+          ]),
+        ),
       ),
     );
   }
+}
+
+class _R {
+  final String name;
+  final int score;
+  final String grade;
+  final Color color;
+  const _R(this.name, this.score, this.grade, this.color);
 }

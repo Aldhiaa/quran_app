@@ -1,129 +1,69 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import '../../core/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 
 class ReportsCenterScreen extends StatefulWidget {
   const ReportsCenterScreen({super.key});
-
   @override
   State<ReportsCenterScreen> createState() => _ReportsCenterScreenState();
 }
 
 class _ReportsCenterScreenState extends State<ReportsCenterScreen> {
-  final _teacherService = TeacherService();
-  bool _isLoading = true;
-  String? _errorMessage;
-  Map<String, dynamic>? _summary;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadSummary();
-  }
-
-  Future<void> _loadSummary() async {
-    setState(() { _isLoading = true; _errorMessage = null; });
-    try {
-      _summary = await _teacherService.getTeacherSummary();
-      setState(() => _isLoading = false);
-    } catch (e) {
-      setState(() { _errorMessage = e.toString(); _isLoading = false; });
-    }
-  }
-
-  @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
-  }
+  int _filter = 0;
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _loadSummary,
-      child: AppShell(
-        title: 'تقارير الحلقة',
-        showBack: false,
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _loadSummary, child: const Text('إعادة المحاولة')),
-                      ],
-                    ),
-                  )
-                : ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Card(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              children: [
-                                Row(children: [
-                                  StatCard(label: 'الجلسات', value: '${_summary?['daily_sessions']?['total'] ?? 0}'),
-                                  const SizedBox(width: 10),
-                                  StatCard(label: 'متوسط الاختبار', value: '${_summary?['monthly_test_average'] ?? '--'}'),
-                                ]),
-                                const SizedBox(height: 12),
-                                Row(children: [
-                                  StatCard(label: 'حضور', value: '${_summary?['attendance']?['rate'] ?? 0}%'),
-                                  const SizedBox(width: 10),
-                                  StatCard(label: 'خطط علاجية', value: '${_summary?['remedial_plans']?['open'] ?? 0}'),
-                                ]),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'التقرير اليومي',
-                          subtitle: '${_summary?['daily_sessions']?['submitted'] ?? 0} مقدم من ${_summary?['daily_sessions']?['total'] ?? 0}',
-                          icon: Icons.insert_drive_file_outlined,
-                          onTap: () => Navigator.pushNamed(context, '/teacher/daily-followup'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'التقييمات الأسبوعية',
-                          subtitle: 'متابعة التقييمات',
-                          icon: Icons.view_week_outlined,
-                          onTap: () => Navigator.pushNamed(context, '/teacher/weekly-evaluation'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'الاختبارات الشهرية',
-                          subtitle: 'متوسط: ${_summary?['monthly_test_average'] ?? '--'}%',
-                          icon: Icons.calendar_view_month_outlined,
-                          onTap: () => Navigator.pushNamed(context, '/teacher/monthly-exams'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'إحصائيات الحلقة',
-                          subtitle: 'تحليل الأداء',
-                          icon: Icons.bar_chart_outlined,
-                        ),
-                      ),
-                    ],
-                  ),
+    final items = [
+      _R('تقرير المتابعة اليومي', 'حلقة البقرة • 1446/11/05', BadgeKind.success, 'معتمد', Icons.description_rounded),
+      _R('تقييم أسبوعي', 'الأسبوع 45', BadgeKind.warning, 'قيد المراجعة', Icons.fact_check_rounded),
+      _R('اختبار شهر شعبان', 'حلقة البقرة', BadgeKind.danger, 'مُرجَع', Icons.assignment_rounded),
+      _R('تقرير المتابعة اليومي', 'حلقة آل عمران • 1446/11/05', BadgeKind.neutral, 'مسودة', Icons.description_rounded),
+      _R('تقييم أسبوعي', 'الأسبوع 44', BadgeKind.success, 'معتمد', Icons.fact_check_rounded),
+    ];
+
+    return GreenHeaderScaffold(
+      title: 'مركز التقارير',
+      showBack: false,
+      headerExtra: SearchFilterBar(hint: 'بحث في التقارير', onChanged: (_) {}),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        children: [
+          FilterChipsBar(
+            items: const ['الكل', 'اليومي', 'الأسبوعي', 'الشهري', 'المُرجعة'],
+            selected: _filter,
+            onChanged: (i) => setState(() => _filter = i),
+          ),
+          const SizedBox(height: 12),
+          const KpiGrid(items: [
+            KpiCard(label: 'تقارير اليوم', value: '4', icon: Icons.today_rounded, color: AppColors.primary),
+            KpiCard(label: 'قيد المراجعة', value: '2', icon: Icons.hourglass_top_rounded, color: AppColors.warning),
+            KpiCard(label: 'معتمدة', value: '38', icon: Icons.verified_rounded, color: AppColors.success),
+            KpiCard(label: 'مُرجَعة', value: '1', icon: Icons.replay_rounded, color: AppColors.danger),
+          ]),
+          const SizedBox(height: 12),
+          const AppSectionTitle(title: 'أحدث التقارير'),
+          const SizedBox(height: 8),
+          ...items.map((r) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: EntityListCard(
+                  leading: r.icon,
+                  title: r.title,
+                  subtitle: r.subtitle,
+                  badgeText: r.status,
+                  badgeKind: r.kind,
+                ),
+              )),
+        ],
       ),
     );
   }
+}
+
+class _R {
+  final String title;
+  final String subtitle;
+  final BadgeKind kind;
+  final String status;
+  final IconData icon;
+  const _R(this.title, this.subtitle, this.kind, this.status, this.icon);
 }

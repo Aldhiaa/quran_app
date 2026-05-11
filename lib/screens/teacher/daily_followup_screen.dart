@@ -1,123 +1,159 @@
 import 'package:flutter/material.dart';
-import '../../services/teacher_service.dart';
+import '../../core/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 
-class DailyFollowupScreen extends StatefulWidget {
+class DailyFollowupScreen extends StatelessWidget {
   const DailyFollowupScreen({super.key});
 
   @override
-  State<DailyFollowupScreen> createState() => _DailyFollowupScreenState();
+  Widget build(BuildContext context) {
+    final entries = [
+      _F('أحمد العتيبي', 'البقرة 1-20', 'حاضر', BadgeKind.success, .95),
+      _F('عبدالله القحطاني', 'البقرة 21-40', 'حاضر', BadgeKind.success, .80),
+      _F('محمد الدوسري', 'آل عمران 1-15', 'متأخر', BadgeKind.warning, .50),
+      _F('سعد الشهري', 'النساء 1-25', 'حاضر', BadgeKind.success, .85),
+      _F('فيصل الزهراني', 'لم يحفظ', 'غائب', BadgeKind.danger, .00),
+    ];
+
+    return GreenHeaderScaffold(
+      title: 'دفتر المتابعة',
+      headerExtra: const _HeaderRow(),
+      bottomNavigationBar: const DraftSubmitBar(),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        children: [
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            child: Row(children: [
+              const Icon(Icons.calendar_month_rounded, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text('السبت — 1446/11/05',
+                  style: TextStyle(fontWeight: FontWeight.w700)),
+              const Spacer(),
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.edit_rounded, size: 16),
+                label: const Text('تغيير'),
+              ),
+            ]),
+          ),
+          const SizedBox(height: 10),
+          ...entries.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 10),
+                child: _StudentRowCard(entry: e),
+              )),
+        ],
+      ),
+    );
+  }
 }
 
-class _DailyFollowupScreenState extends State<DailyFollowupScreen> {
-  final TeacherService _teacherService = TeacherService();
-  bool _isLoading = true;
-  String? _errorMessage;
-  Map<String, dynamic>? _summary;
+class _F {
+  final String name;
+  final String range;
+  final String status;
+  final BadgeKind kind;
+  final double quality;
+  const _F(this.name, this.range, this.status, this.kind, this.quality);
+}
 
+class _HeaderRow extends StatelessWidget {
+  const _HeaderRow();
   @override
-  void initState() {
-    super.initState();
-    _loadSummary();
+  Widget build(BuildContext context) {
+    return Row(children: [
+      Expanded(
+        child: _Pill(icon: Icons.menu_book_rounded, text: 'حلقة البقرة'),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: _Pill(icon: Icons.groups_rounded, text: '24 طالب'),
+      ),
+      const SizedBox(width: 8),
+      Expanded(
+        child: _Pill(icon: Icons.access_time_rounded, text: '4:30 — 6:00'),
+      ),
+    ]);
   }
+}
 
-  Future<void> _loadSummary() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final summary = await _teacherService.getTeacherSummary();
-      setState(() {
-        _summary = summary;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() {
-        _errorMessage = e.toString();
-        _isLoading = false;
-      });
-    }
-  }
-
+class _Pill extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _Pill({required this.icon, required this.text});
   @override
-  void dispose() {
-    _teacherService.dispose();
-    super.dispose();
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: .12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: .25)),
+      ),
+      child: Row(children: [
+        Icon(icon, color: AppColors.accentGold, size: 16),
+        const SizedBox(width: 6),
+        Expanded(
+          child: Text(text,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 12)),
+        ),
+      ]),
+    );
   }
+}
+
+class _StudentRowCard extends StatelessWidget {
+  final _F entry;
+  const _StudentRowCard({required this.entry});
 
   @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: _loadSummary,
-      child: AppShell(
-        title: 'المتابعة اليومية',
-        body: _isLoading
-            ? const Center(child: CircularProgressIndicator())
-            : _errorMessage != null
-                ? Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(_errorMessage!, style: const TextStyle(color: Colors.red), textAlign: TextAlign.center),
-                        const SizedBox(height: 16),
-                        ElevatedButton(onPressed: _loadSummary, child: const Text('إعادة المحاولة')),
-                      ],
-                    ),
-                  )
-                : ListView(
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Row(children: [
-                          StatCard(label: 'الحضور', value: '${_summary?['attendance']?['present_records'] ?? '--'}'),
-                          const SizedBox(width: 10),
-                          StatCard(label: 'الغياب', value: '${(_summary?['attendance']?['total_records'] ?? 0) - (_summary?['attendance']?['present_records'] ?? 0)}'),
-                          const SizedBox(width: 10),
-                          StatCard(label: 'الجلسات', value: '${_summary?['daily_sessions']?['total'] ?? '--'}'),
-                        ]),
-                      ),
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'تسجيل الحضور',
-                          subtitle: 'حاضر، متأخر، بعذر، غائب',
-                          icon: Icons.how_to_reg_outlined,
-                          onTap: () => Navigator.pushNamed(context, '/teacher/attendance-entry'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'إدخال تقرير الجلسة',
-                          subtitle: 'حفظ، مراجعة، تلاوة، سلوك',
-                          icon: Icons.note_add_outlined,
-                          onTap: () => Navigator.pushNamed(context, '/teacher/daily-report-entry'),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'الخطط العلاجية',
-                          subtitle: '${_summary?['remedial_plans']?['open'] ?? 0} مفتوحة، ${_summary?['remedial_plans']?['overdue'] ?? 0} متأخرة',
-                          icon: Icons.healing_outlined,
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: InfoTile(
-                          title: 'التواصل مع أولياء الأمور',
-                          subtitle: '${_summary?['parent_contacts']?['total'] ?? 0} اتصال، ${_summary?['parent_contacts']?['follow_ups_due'] ?? 0} متابعة',
-                          icon: Icons.contact_phone_outlined,
-                        ),
-                      ),
-                    ],
-                  ),
+    return AppCard(
+      onTap: () => Navigator.pushNamed(context, '/teacher/student-detail'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: AppColors.accentGold.withValues(alpha: .18),
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(entry.name, style: const TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 2),
+                  Text(entry.range, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                ],
+              ),
+            ),
+            StatusBadge(text: entry.status, kind: entry.kind),
+          ]),
+          const SizedBox(height: 10),
+          Row(children: [
+            const Text('جودة الحفظ',
+                style: TextStyle(color: AppColors.muted, fontSize: 11.5, fontWeight: FontWeight.w600)),
+            const SizedBox(width: 8),
+            Expanded(
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(50),
+                child: LinearProgressIndicator(value: entry.quality, minHeight: 6),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Text('${(entry.quality * 100).round()}٪',
+                style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary)),
+          ]),
+        ],
       ),
     );
   }

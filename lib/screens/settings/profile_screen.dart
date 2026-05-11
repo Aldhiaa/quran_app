@@ -1,112 +1,80 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
-import '../../services/auth_service.dart';
-import '../../widgets/common_widgets.dart';
 import '../../providers/auth_provider.dart';
+import '../../widgets/common_widgets.dart';
 
-class ProfileScreen extends StatefulWidget {
+class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
   @override
-  State<ProfileScreen> createState() => _ProfileScreenState();
-}
-
-class _ProfileScreenState extends State<ProfileScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  bool _saving = false;
-
-  @override
-  void initState() {
-    super.initState();
-    final user = Provider.of<AuthProvider>(context, listen: false).user;
-    _nameController = TextEditingController(text: user?.name ?? '');
-    _emailController = TextEditingController(text: user?.email ?? '');
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _save() async {
-    setState(() => _saving = true);
-    try {
-      final auth = AuthService();
-      final ok = await auth.updateProfile(
-        name: _nameController.text.trim(),
-        email: _emailController.text.trim(),
-      );
-      if (!mounted) return;
-      if (ok) {
-        await Provider.of<AuthProvider>(context, listen: false).refreshUser();
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تم حفظ التغييرات')),
-        );
-      } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('فشل الحفظ')),
-        );
-      }
-    } catch (e) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('خطأ: $e')),
-      );
-    } finally {
-      if (mounted) setState(() => _saving = false);
-    }
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Consumer<AuthProvider>(
-      builder: (context, auth, _) {
-        final user = auth.user;
-        return AppShell(
-          title: 'الملف الشخصي',
-          body: ListView(
-            children: [
-              CircleAvatar(
-                radius: 36,
-                backgroundColor: AppColors.primary.withValues(alpha: 0.12),
-                child: Text(
-                  (user?.name?.isNotEmpty == true ? user!.name : '?').substring(0, 1),
-                  style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: AppColors.primary),
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(user?.role ?? '', style: const TextStyle(color: Colors.grey)),
-              const SizedBox(height: 16),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(labelText: 'الاسم', prefixIcon: Icon(Icons.person_outline)),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: _emailController,
-                decoration: const InputDecoration(labelText: 'البريد الإلكتروني', prefixIcon: Icon(Icons.email_outlined)),
-                keyboardType: TextInputType.emailAddress,
-              ),
-              const SizedBox(height: 10),
-              Card(
-                child: ListTile(
-                  leading: const Icon(Icons.badge_outlined),
-                  title: const Text('الدور'),
-                  trailing: Text(user?.role ?? '--'),
-                ),
-              ),
-            ],
+    final auth = Provider.of<AuthProvider>(context);
+    final name = auth.user?.name ?? 'المستخدم';
+    final role = _roleLabel(auth.role);
+
+    return GreenHeaderScaffold(
+      title: 'الملف الشخصي',
+      headerExtra: Column(children: [
+        Container(
+          width: 88,
+          height: 88,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: .12),
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.accentGold, width: 1.6),
           ),
-          bottomNavigationBar: PrimaryBottomButton(
-            title: _saving ? 'جاري الحفظ...' : 'حفظ التغييرات',
-            onPressed: _saving ? null : _save,
+          alignment: Alignment.center,
+          child: const Icon(Icons.person_rounded, color: Colors.white, size: 44),
+        ),
+        const SizedBox(height: 10),
+        Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 18)),
+        const SizedBox(height: 4),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: AppColors.accentGold.withValues(alpha: .2),
+            borderRadius: BorderRadius.circular(50),
+            border: Border.all(color: AppColors.accentGold),
           ),
-        );
-      },
+          child: Text(role,
+              style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w800, fontSize: 12)),
+        ),
+      ]),
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+        children: const [
+          KpiGrid(items: [
+            KpiCard(label: 'الحلقات', value: '2', icon: Icons.menu_book_rounded, color: AppColors.primary),
+            KpiCard(label: 'الطلاب', value: '24', icon: Icons.groups_rounded, color: AppColors.info),
+            KpiCard(label: 'تقارير معتمدة', value: '38', icon: Icons.verified_rounded, color: AppColors.success),
+            KpiCard(label: 'سنوات الخبرة', value: '6', icon: Icons.workspace_premium_rounded, color: AppColors.accentGold),
+          ]),
+          SizedBox(height: 14),
+          InfoTile(title: 'البريد الإلكتروني', subtitle: 'teacher@quran.app', icon: Icons.email_rounded, color: AppColors.info),
+          SizedBox(height: 10),
+          InfoTile(title: 'الجوال', subtitle: '+966500000000', icon: Icons.phone_rounded, color: AppColors.success),
+          SizedBox(height: 10),
+          InfoTile(title: 'المركز', subtitle: 'مركز النور', icon: Icons.location_on_rounded, color: AppColors.primary),
+          SizedBox(height: 10),
+          InfoTile(title: 'تعديل البيانات', subtitle: 'تحديث الاسم وكلمة المرور', icon: Icons.edit_rounded, color: AppColors.muted),
+        ],
+      ),
     );
+  }
+
+  String _roleLabel(String r) {
+    switch (r) {
+      case 'teacher':
+        return 'معلم حلقة';
+      case 'student':
+        return 'طالب';
+      case 'center_supervisor':
+        return 'مشرف مركز';
+      case 'guide':
+        return 'موجهة';
+      default:
+        return 'مستخدم';
+    }
   }
 }

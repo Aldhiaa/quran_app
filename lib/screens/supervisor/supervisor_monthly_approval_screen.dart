@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 
-class ExamResultDetailScreen extends StatelessWidget {
-  const ExamResultDetailScreen({super.key});
+class SupervisorMonthlyApprovalScreen extends StatelessWidget {
+  const SupervisorMonthlyApprovalScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -15,9 +15,8 @@ class ExamResultDetailScreen extends StatelessWidget {
       ('السلوك', 48, 50, AppColors.success),
     ];
     final total = rows.fold<int>(0, (a, r) => a + r.$2);
-
     return GreenHeaderScaffold(
-      title: 'تفاصيل النتيجة',
+      title: 'اعتماد الاختبار الشهري',
       headerExtra: AppCard(
         color: Colors.white.withValues(alpha: .12),
         padding: const EdgeInsets.all(12),
@@ -28,48 +27,26 @@ class ExamResultDetailScreen extends StatelessWidget {
             strokeWidth: 8,
             color: AppColors.accentGold,
             trackColor: Colors.white.withValues(alpha: .25),
-            label: '$total',
+            label: '${(total / 200 * 100).round()}٪',
           ),
           const SizedBox(width: 12),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text('أحمد محمد العتيبي',
+              children: const [
+                Text('اختبار شهر شعبان',
                     style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
                 SizedBox(height: 3),
-                Text('اختبار شهر شعبان',
+                Text('أحمد العتيبي • حلقة البقرة',
                     style: TextStyle(color: Colors.white70, fontSize: 12)),
-                SizedBox(height: 6),
-                StarRating(value: 4.5),
               ],
             ),
           ),
           Text('$total / 200',
-              style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w800, fontSize: 16)),
+              style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w800)),
         ]),
       ),
-      bottomNavigationBar: SafeArea(
-        minimum: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        child: Row(children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.share_rounded),
-              label: const Text('مشاركة'),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            flex: 2,
-            child: ElevatedButton.icon(
-              onPressed: () {},
-              icon: const Icon(Icons.print_rounded, color: Colors.white),
-              label: const Text('طباعة'),
-            ),
-          ),
-        ]),
-      ),
+      bottomNavigationBar: const ApprovalActionBar(),
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         children: [
@@ -79,7 +56,7 @@ class ExamResultDetailScreen extends StatelessWidget {
                 for (final r in rows) ...[
                   Row(children: [
                     Container(width: 8, height: 32,
-                      decoration: BoxDecoration(color: r.$4, borderRadius: BorderRadius.circular(2))),
+                        decoration: BoxDecoration(color: r.$4, borderRadius: BorderRadius.circular(2))),
                     const SizedBox(width: 10),
                     Expanded(child: Text(r.$1, style: const TextStyle(fontWeight: FontWeight.w700))),
                     Text('${r.$2} / ${r.$3}',
@@ -94,12 +71,16 @@ class ExamResultDetailScreen extends StatelessWidget {
           AppCard(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: const [
-                Text('ملاحظات المعلم', style: TextStyle(fontWeight: FontWeight.w800)),
-                SizedBox(height: 6),
-                Text(
-                  'الطالب متميز في الحفظ والتلاوة، يحتاج إلى مراجعة بسيطة لأحكام التجويد.',
-                  style: TextStyle(color: AppColors.muted, height: 1.5),
+              children: [
+                const Text('ملاحظات الاعتماد', style: TextStyle(fontWeight: FontWeight.w800)),
+                const SizedBox(height: 8),
+                TextField(
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    hintText: 'أضف ملاحظات للمعلم (مطلوبة في حال الإرجاع)',
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(borderRadius: BorderRadius.circular(AppRadius.md)),
+                  ),
                 ),
               ],
             ),

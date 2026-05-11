@@ -2,27 +2,24 @@ import 'package:flutter/material.dart';
 import '../../core/app_theme.dart';
 import '../../widgets/common_widgets.dart';
 
-class WeeklyEvaluationScreen extends StatefulWidget {
-  const WeeklyEvaluationScreen({super.key});
+class SupervisorEducationalSupervisionScreen extends StatefulWidget {
+  const SupervisorEducationalSupervisionScreen({super.key});
   @override
-  State<WeeklyEvaluationScreen> createState() => _WeeklyEvaluationScreenState();
+  State<SupervisorEducationalSupervisionScreen> createState() =>
+      _SupervisorEducationalSupervisionScreenState();
 }
 
-class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
+class _SupervisorEducationalSupervisionScreenState extends State<SupervisorEducationalSupervisionScreen> {
   static const _criteria = [
-    'الالتزام بالشعائر التعبدية',
-    'الالتزام بالأدب العام والأخلاق',
-    'الانضباط في المواعيد',
-    'الانضباط في الحلقة القرآنية',
-    'الانضباط في الدراسة النظامية',
-    'النظافة والترتيب الشخصي',
-    'المحافظة على الممتلكات',
-    'روح المبادرة والتعاون',
-    'التميز في جانب معين',
-    'التأثير الإيجابي في الآخرين',
+    'التحضير للحلقة وإدارة الوقت',
+    'وضوح الشرح وأساليب التدريس',
+    'تفاعل الطلاب ومشاركتهم',
+    'استخدام أساليب التحفيز',
+    'تطبيق دفتر المتابعة بدقة',
+    'الانضباط الصفي والإدارة',
   ];
-
   late List<int> _scores;
+
   @override
   void initState() {
     super.initState();
@@ -33,9 +30,9 @@ class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final pct = _total / (_criteria.length * 10);
+    final pct = _total / (_criteria.length * 5);
     return GreenHeaderScaffold(
-      title: 'التقييم الأسبوعي',
+      title: 'الإشراف التربوي',
       headerExtra: AppCard(
         color: Colors.white.withValues(alpha: .12),
         padding: const EdgeInsets.all(12),
@@ -46,23 +43,21 @@ class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
             strokeWidth: 7,
             color: AppColors.accentGold,
             trackColor: Colors.white.withValues(alpha: .25),
-            label: '$_total',
+            label: '$_total/${_criteria.length * 5}',
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: 12),
           const Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('أحمد العتيبي',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
-                SizedBox(height: 4),
-                Text('الأسبوع: 1446/11/01 — 1446/11/07',
+                Text('أ. سعد القحطاني',
+                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                SizedBox(height: 3),
+                Text('مركز النور • حلقة البقرة',
                     style: TextStyle(color: Colors.white70, fontSize: 12)),
               ],
             ),
           ),
-          Text('$_total / 100',
-              style: const TextStyle(color: AppColors.accentGold, fontWeight: FontWeight.w800, fontSize: 16)),
         ]),
       ),
       bottomNavigationBar: const DraftSubmitBar(),
@@ -88,18 +83,12 @@ class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
                       style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 10),
-                Expanded(
-                  child: Text(_criteria[i], style: const TextStyle(fontWeight: FontWeight.w700)),
-                ),
-                Text('${_scores[i]} / 10',
+                Expanded(child: Text(_criteria[i], style: const TextStyle(fontWeight: FontWeight.w700))),
+                Text('${_scores[i]} / 5',
                     style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
               ]),
               const SizedBox(height: 10),
-              RatingSelector(
-                max: 10,
-                value: _scores[i],
-                onChanged: (v) => setState(() => _scores[i] = v),
-              ),
+              RatingSelector(max: 5, value: _scores[i], onChanged: (v) => setState(() => _scores[i] = v)),
             ],
           ),
         ),

@@ -59,9 +59,15 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     await Future.delayed(const Duration(milliseconds: 400));
+    final name = switch (role) {
+      'teacher' => 'أ. سعد القحطاني',
+      'center_supervisor' => 'أ. محمد العمري',
+      'guide' => 'أ. منى السبيعي',
+      _ => 'أحمد العتيبي',
+    };
     _user = StudentModel(
       id: 1,
-      name: role == 'teacher' ? 'معلم تجريبي' : 'طالب تجريبي',
+      name: name,
       email: 'demo@quran.app',
       progress: 0.65,
       parts: '15',
