@@ -69,7 +69,7 @@ class _SupervisorAttendanceAlertsScreenState extends State<SupervisorAttendanceA
                           const SizedBox(height: 4),
                           Text(a.reason,
                               style: TextStyle(
-                                  color: StatusBadge._color(a.kind), fontWeight: FontWeight.w700, fontSize: 12.5)),
+                                  color: badgeColor(a.kind), fontWeight: FontWeight.w700, fontSize: 12.5)),
                           const SizedBox(height: 2),
                           Text(a.where, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
                           const SizedBox(height: 8),
