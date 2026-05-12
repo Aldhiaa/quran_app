@@ -2,14 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/guide_provider.dart';
 import '../../widgets/common_widgets.dart';
 
-class GuideDashboardScreen extends StatelessWidget {
+class GuideDashboardScreen extends StatefulWidget {
   const GuideDashboardScreen({super.key});
+
+  @override
+  State<GuideDashboardScreen> createState() => _GuideDashboardScreenState();
+}
+
+class _GuideDashboardScreenState extends State<GuideDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<GuideProvider>().loadHome();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final guide = Provider.of<GuideProvider>(context);
+    final home = guide.home;
+    final kpis = home['kpis'] is Map ? Map<String, dynamic>.from(home['kpis'] as Map) : home;
+
     return GreenHeaderScaffold(
       title: 'لوحة الموجهة',
       showBack: false,
@@ -28,13 +46,20 @@ class GuideDashboardScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const KpiGrid(items: [
-            KpiCard(label: 'المراكز', value: '6', icon: Icons.business_rounded, color: AppColors.primary),
-            KpiCard(label: 'المشرفات', value: '8', icon: Icons.school_rounded, color: AppColors.info),
-            KpiCard(label: 'الحلقات النشطة', value: '24', icon: Icons.menu_book_rounded, color: AppColors.accentGold),
-            KpiCard(label: 'زيارات اليوم', value: '4', icon: Icons.event_available_rounded, color: AppColors.warning),
-            KpiCard(label: 'تقارير للمراجعة', value: '11', icon: Icons.hourglass_top_rounded, color: AppColors.info),
-            KpiCard(label: 'الاحتياج التدريبي', value: '5', icon: Icons.psychology_alt_rounded, color: AppColors.danger),
+          if (guide.error != null) ...[
+            AppCard(
+              color: AppColors.danger.withValues(alpha: .06),
+              child: Text(guide.error!, style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(height: 12),
+          ],
+          KpiGrid(items: [
+            KpiCard(label: 'المراكز', value: '${kpis['centers_count'] ?? kpis['assigned_centers_count'] ?? 6}', icon: Icons.business_rounded, color: AppColors.primary),
+            KpiCard(label: 'المشرفات', value: '${kpis['supervisors_count'] ?? 8}', icon: Icons.school_rounded, color: AppColors.info),
+            KpiCard(label: 'الحلقات النشطة', value: '${kpis['active_circles_count'] ?? 24}', icon: Icons.menu_book_rounded, color: AppColors.accentGold),
+            KpiCard(label: 'زيارات اليوم', value: '${kpis['today_visits_count'] ?? 4}', icon: Icons.event_available_rounded, color: AppColors.warning),
+            KpiCard(label: 'تقارير للمراجعة', value: '${kpis['pending_reports_count'] ?? 11}', icon: Icons.hourglass_top_rounded, color: AppColors.info),
+            KpiCard(label: 'الاحتياج التدريبي', value: '${kpis['training_needs_count'] ?? 5}', icon: Icons.psychology_alt_rounded, color: AppColors.danger),
           ]),
           const SizedBox(height: 14),
           AppCard(

@@ -66,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> {
                   child: const Icon(Icons.mosque_rounded, size: 50, color: AppColors.accentGold),
                 ),
                 const SizedBox(height: 18),
-                const Text('حلق القرآن',
+                const Text('نظام المنارة',
                     style: TextStyle(
                       fontSize: 26,
                       fontWeight: FontWeight.w800,

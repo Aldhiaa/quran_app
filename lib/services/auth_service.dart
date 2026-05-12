@@ -1,63 +1,49 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-import '../core/api_constants.dart';
+
+import '../core/api/api_client.dart';
+import '../core/api/endpoints/auth_endpoints.dart';
 
 class AuthService {
-  final _storage = const FlutterSecureStorage();
-  final http.Client _httpClient;
+  final ApiClient _apiClient;
 
-  AuthService({http.Client? httpClient}) : _httpClient = httpClient ?? http.Client();
+  AuthService({http.Client? httpClient, ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient(httpClient: httpClient);
 
   Future<Map<String, dynamic>> login(String email, String password) async {
-    try {
-      final response = await _httpClient.post(
-        Uri.parse(ApiConstants.token),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-        body: jsonEncode({
-          'email': email,
-          'password': password,
-          'device_name': 'mobile_app',
-        }),
-      );
+    final payload = {
+      'email': email,
+      'password': password,
+      'device_name': 'mobile_app',
+    };
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        await _storeAuthData(data);
-        return data;
-      } else {
-        final body = jsonDecode(response.body);
-        throw Exception(body['message'] ?? 'فشل تسجيل الدخول: ${response.statusCode}');
-      }
-    } on SocketException catch (e) {
-      throw Exception('فشل الاتصال بالخادم: ${e.message}');
-    } on http.ClientException catch (e) {
-      throw Exception('فشل الاتصال بالخادم: ${e.message}');
-    } on FormatException catch (_) {
-      throw Exception('خطأ في استجابة الخادم');
-    } catch (e) {
-      rethrow;
+    dynamic response;
+    try {
+      response = await _apiClient.post(
+        AuthEndpoints.mobileLogin,
+        authenticated: false,
+        body: payload,
+      );
+    } catch (_) {
+      response = await _apiClient.post(
+        AuthEndpoints.token,
+        authenticated: false,
+        body: payload,
+      );
     }
+
+    final data = _asMap(response);
+    await _storeAuthData(data);
+    return data;
   }
 
   Future<void> logout() async {
     try {
-      final token = await _storage.read(key: 'token');
+      final token = await _apiClient.readToken();
       if (token != null) {
-        await _httpClient.post(
-          Uri.parse(ApiConstants.logout),
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer $token',
-          },
-        );
+        await _apiClient.post(AuthEndpoints.logout);
       }
-    } catch (e) {
-      // Ignore logout errors
+    } catch (_) {
+      // Ignore logout errors, then clear local auth.
     } finally {
       await _clearAuthData();
     }
@@ -65,64 +51,85 @@ class AuthService {
 
   Future<Map<String, dynamic>?> getCurrentUser() async {
     try {
-      final token = await _storage.read(key: 'token');
+      final token = await _apiClient.readToken();
       if (token == null) return null;
 
-      final response = await _httpClient.get(
-        Uri.parse(ApiConstants.me),
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-      );
-
-      if (response.statusCode == 200) {
-        return jsonDecode(response.body);
+      try {
+        return _asMap(await _apiClient.get(AuthEndpoints.mobileMe));
+      } catch (_) {
+        return _asMap(await _apiClient.get(AuthEndpoints.me));
       }
-      return null;
-    } catch (e) {
+    } catch (_) {
       return null;
     }
   }
 
-  Future<String?> getToken() async => _storage.read(key: 'token');
+  Future<String?> getToken() => _apiClient.readToken();
 
   Future<bool> updateProfile({required String name, required String email}) async {
     try {
-      final token = await _storage.read(key: 'token');
+      final token = await _apiClient.readToken();
       if (token == null) return false;
-      final response = await _httpClient.put(
-        Uri.parse(ApiConstants.me),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'Authorization': 'Bearer $token',
-        },
-        body: jsonEncode({'name': name, 'email': email}),
+
+      final data = _asMap(
+        await _apiClient.put(
+          AuthEndpoints.me,
+          body: {'name': name, 'email': email},
+        ),
       );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data is Map && data['user'] != null) {
-          await _storage.write(key: 'user', value: jsonEncode(data['user']));
-        }
-        return true;
+      final user = _extractUser(data);
+      if (user != null) {
+        await _apiClient.writeUser(user);
       }
-      return false;
+      return true;
     } catch (_) {
       return false;
     }
   }
 
   Future<void> _storeAuthData(Map<String, dynamic> data) async {
-    await _storage.write(key: 'token', value: data['token']);
-    await _storage.write(key: 'user', value: jsonEncode(data['user']));
+    final wrapped = data['data'];
+    final token = data['token'] ??
+        data['access_token'] ??
+        (wrapped is Map ? wrapped['token'] : null) ??
+        (wrapped is Map ? wrapped['access_token'] : null);
+    final user = _extractUser(data);
+
+    if (token == null) {
+      throw Exception('لم يرجع الخادم رمز الدخول');
+    }
+
+    await _apiClient.writeToken('$token');
+    if (user != null) {
+      await _apiClient.writeUser(user);
+    }
   }
 
-  Future<void> _clearAuthData() async {
-    await _storage.deleteAll();
+  Future<void> _clearAuthData() => _apiClient.clearAuth();
+
+  Map<String, dynamic> _asMap(dynamic value) {
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    return <String, dynamic>{};
+  }
+
+  Map<String, dynamic>? _extractUser(Map<String, dynamic> data) {
+    if (data['user'] is Map) {
+      return Map<String, dynamic>.from(data['user'] as Map);
+    }
+    final wrapped = data['data'];
+    if (wrapped is Map && wrapped['user'] is Map) {
+      return Map<String, dynamic>.from(wrapped['user'] as Map);
+    }
+    if (wrapped is Map && wrapped.containsKey('id')) {
+      return Map<String, dynamic>.from(wrapped);
+    }
+    if (data.containsKey('id')) return data;
+    return null;
   }
 
   void dispose() {
-    _httpClient.close();
+    _apiClient.dispose();
   }
 }
+

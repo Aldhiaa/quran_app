@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../core/utils/quran_range_validator.dart';
 import '../data/quran_surahs.dart';
 
 class QuranRange {
@@ -51,6 +52,7 @@ class _QuranRangePickerState extends State<QuranRangePicker> {
   late int _fromAyah;
   late int _toSurah;
   late int _toAyah;
+  String? _error;
 
   @override
   void initState() {
@@ -63,12 +65,22 @@ class _QuranRangePickerState extends State<QuranRangePicker> {
   }
 
   void _emit() {
-    widget.onChanged(QuranRange(
+    final range = QuranRange(
       fromSurah: _fromSurah,
       fromAyah: _fromAyah,
       toSurah: _toSurah,
       toAyah: _toAyah,
-    ));
+    );
+    final validation = QuranRangeValidator.validate(
+      fromSurah: range.fromSurah,
+      fromAyah: range.fromAyah,
+      toSurah: range.toSurah,
+      toAyah: range.toAyah,
+    );
+    setState(() => _error = validation.message);
+    if (validation.isValid) {
+      widget.onChanged(range);
+    }
   }
 
   @override
@@ -119,6 +131,13 @@ class _QuranRangePickerState extends State<QuranRangePicker> {
                 _emit();
               })),
             ]),
+            if (_error != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _error!,
+                style: const TextStyle(color: Colors.red, fontSize: 12),
+              ),
+            ],
           ],
         ),
       ),

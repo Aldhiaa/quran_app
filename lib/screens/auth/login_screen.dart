@@ -88,7 +88,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 12),
                     const Text(
-                      'حلق القرآن',
+                      'نظام المنارة',
                       style: TextStyle(
                         color: AppColors.accentGold,
                         fontWeight: FontWeight.w800,

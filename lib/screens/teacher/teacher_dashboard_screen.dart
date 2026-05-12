@@ -2,14 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/teacher_provider.dart';
 import '../../widgets/common_widgets.dart';
 
-class TeacherDashboardScreen extends StatelessWidget {
+class TeacherDashboardScreen extends StatefulWidget {
   const TeacherDashboardScreen({super.key});
+
+  @override
+  State<TeacherDashboardScreen> createState() => _TeacherDashboardScreenState();
+}
+
+class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<TeacherProvider>().loadHome();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final teacher = Provider.of<TeacherProvider>(context);
+    final home = teacher.home;
+    final kpis = home['kpis'] is Map ? Map<String, dynamic>.from(home['kpis'] as Map) : home;
+
     return GreenHeaderScaffold(
       title: 'لوحة المعلم',
       showBack: false,
@@ -27,11 +45,21 @@ class TeacherDashboardScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
+          if (teacher.error != null) ...[
+            AppCard(
+              color: AppColors.danger.withValues(alpha: .06),
+              child: Text(
+                teacher.error!,
+                style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w700),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
           KpiGrid(items: [
-            const KpiCard(label: 'الحلقات', value: '2', icon: Icons.menu_book_rounded, color: AppColors.primary),
-            const KpiCard(label: 'الطلاب', value: '24', icon: Icons.groups_rounded, color: AppColors.info),
-            const KpiCard(label: 'الحضور اليوم', value: '21', icon: Icons.check_circle_rounded, color: AppColors.success, sub: '٪87'),
-            const KpiCard(label: 'الإختبارات', value: '5', icon: Icons.assignment_turned_in_rounded, color: AppColors.accentGold),
+            KpiCard(label: 'الحلقات', value: '${kpis['circles_count'] ?? kpis['assigned_circles_count'] ?? 2}', icon: Icons.menu_book_rounded, color: AppColors.primary),
+            KpiCard(label: 'الطلاب', value: '${kpis['students_count'] ?? kpis['active_students_count'] ?? 24}', icon: Icons.groups_rounded, color: AppColors.info),
+            KpiCard(label: 'الحضور اليوم', value: '${kpis['today_present_count'] ?? kpis['present_count'] ?? 21}', icon: Icons.check_circle_rounded, color: AppColors.success, sub: '${kpis['attendance_rate'] ?? '٪87'}'),
+            KpiCard(label: 'الإختبارات', value: '${kpis['monthly_tests_count'] ?? kpis['upcoming_monthly_tests_count'] ?? 5}', icon: Icons.assignment_turned_in_rounded, color: AppColors.accentGold),
           ]),
           const SizedBox(height: 14),
           AppCard(

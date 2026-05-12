@@ -2,14 +2,32 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
 import '../../providers/auth_provider.dart';
+import '../../providers/supervisor_provider.dart';
 import '../../widgets/common_widgets.dart';
 
-class SupervisorDashboardScreen extends StatelessWidget {
+class SupervisorDashboardScreen extends StatefulWidget {
   const SupervisorDashboardScreen({super.key});
+
+  @override
+  State<SupervisorDashboardScreen> createState() => _SupervisorDashboardScreenState();
+}
+
+class _SupervisorDashboardScreenState extends State<SupervisorDashboardScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<SupervisorProvider>().loadHome();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final supervisor = Provider.of<SupervisorProvider>(context);
+    final home = supervisor.home;
+    final kpis = home['kpis'] is Map ? Map<String, dynamic>.from(home['kpis'] as Map) : home;
+
     return GreenHeaderScaffold(
       title: 'لوحة المشرف',
       showBack: false,
@@ -27,13 +45,20 @@ class SupervisorDashboardScreen extends StatelessWidget {
       child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
         children: [
-          const KpiGrid(items: [
-            KpiCard(label: 'المراكز', value: '4', icon: Icons.business_rounded, color: AppColors.primary),
-            KpiCard(label: 'الحلقات النشطة', value: '12', icon: Icons.menu_book_rounded, color: AppColors.info),
-            KpiCard(label: 'زيارات اليوم', value: '3', icon: Icons.event_available_rounded, color: AppColors.warning),
-            KpiCard(label: 'الحضور', value: '٪87', icon: Icons.check_circle_rounded, color: AppColors.success),
-            KpiCard(label: 'بانتظار الاعتماد', value: '7', icon: Icons.hourglass_top_rounded, color: AppColors.accentGold),
-            KpiCard(label: 'حالات متابعة', value: '5', icon: Icons.priority_high_rounded, color: AppColors.danger),
+          if (supervisor.error != null) ...[
+            AppCard(
+              color: AppColors.danger.withValues(alpha: .06),
+              child: Text(supervisor.error!, style: const TextStyle(color: AppColors.danger, fontWeight: FontWeight.w700)),
+            ),
+            const SizedBox(height: 12),
+          ],
+          KpiGrid(items: [
+            KpiCard(label: 'المراكز', value: '${kpis['centers_count'] ?? kpis['assigned_centers_count'] ?? 4}', icon: Icons.business_rounded, color: AppColors.primary),
+            KpiCard(label: 'الحلقات النشطة', value: '${kpis['active_circles_count'] ?? 12}', icon: Icons.menu_book_rounded, color: AppColors.info),
+            KpiCard(label: 'زيارات اليوم', value: '${kpis['today_visits_count'] ?? 3}', icon: Icons.event_available_rounded, color: AppColors.warning),
+            KpiCard(label: 'الحضور', value: '${kpis['attendance_rate'] ?? '٪87'}', icon: Icons.check_circle_rounded, color: AppColors.success),
+            KpiCard(label: 'بانتظار الاعتماد', value: '${kpis['pending_approvals_count'] ?? 7}', icon: Icons.hourglass_top_rounded, color: AppColors.accentGold),
+            KpiCard(label: 'حالات متابعة', value: '${kpis['weak_students_count'] ?? kpis['risk_students_count'] ?? 5}', icon: Icons.priority_high_rounded, color: AppColors.danger),
           ]),
           const SizedBox(height: 14),
           AppCard(

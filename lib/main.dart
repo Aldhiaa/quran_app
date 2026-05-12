@@ -3,10 +3,17 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:provider/provider.dart';
 import 'package:quran_mobile_ui/core/app_theme.dart';
 import 'package:quran_mobile_ui/providers/auth_provider.dart';
+import 'package:quran_mobile_ui/providers/guide_provider.dart';
+import 'package:quran_mobile_ui/providers/supervisor_provider.dart';
+import 'package:quran_mobile_ui/providers/sync_provider.dart';
+import 'package:quran_mobile_ui/providers/teacher_provider.dart';
 import 'package:quran_mobile_ui/services/auth_service.dart';
 import 'package:quran_mobile_ui/services/student_service.dart';
 import 'package:quran_mobile_ui/services/communication_service.dart';
 import 'package:quran_mobile_ui/services/teacher_service.dart';
+import 'package:quran_mobile_ui/services/guide_service.dart';
+import 'package:quran_mobile_ui/services/supervisor_service.dart';
+import 'package:quran_mobile_ui/services/sync_service.dart';
 import 'package:quran_mobile_ui/screens/auth/login_screen.dart';
 import 'package:quran_mobile_ui/screens/common/splash_screen.dart';
 import 'package:quran_mobile_ui/screens/common/teacher_shell.dart';
@@ -85,6 +92,9 @@ void main() {
   final studentService = StudentService();
   final communicationService = CommunicationService();
   final teacherService = TeacherService();
+  final supervisorService = SupervisorService();
+  final guideService = GuideService();
+  final syncService = SyncService();
   final authService = AuthService();
 
   runApp(QuranApp(
@@ -92,6 +102,9 @@ void main() {
     studentService: studentService,
     communicationService: communicationService,
     teacherService: teacherService,
+    supervisorService: supervisorService,
+    guideService: guideService,
+    syncService: syncService,
   ));
 }
 
@@ -100,6 +113,9 @@ class QuranApp extends StatelessWidget {
   final StudentService studentService;
   final CommunicationService communicationService;
   final TeacherService teacherService;
+  final SupervisorService supervisorService;
+  final GuideService guideService;
+  final SyncService syncService;
 
   const QuranApp({
     super.key,
@@ -107,6 +123,9 @@ class QuranApp extends StatelessWidget {
     required this.studentService,
     required this.communicationService,
     required this.teacherService,
+    required this.supervisorService,
+    required this.guideService,
+    required this.syncService,
   });
 
   @override
@@ -120,12 +139,27 @@ class QuranApp extends StatelessWidget {
             communicationService: communicationService,
           ),
         ),
+        ChangeNotifierProvider<TeacherProvider>(
+          create: (_) => TeacherProvider(service: teacherService),
+        ),
+        ChangeNotifierProvider<SupervisorProvider>(
+          create: (_) => SupervisorProvider(service: supervisorService),
+        ),
+        ChangeNotifierProvider<GuideProvider>(
+          create: (_) => GuideProvider(service: guideService),
+        ),
+        ChangeNotifierProvider<SyncProvider>(
+          create: (_) => SyncProvider(service: syncService),
+        ),
         Provider<StudentService>.value(value: studentService),
         Provider<CommunicationService>.value(value: communicationService),
         Provider<TeacherService>.value(value: teacherService),
+        Provider<SupervisorService>.value(value: supervisorService),
+        Provider<GuideService>.value(value: guideService),
+        Provider<SyncService>.value(value: syncService),
       ],
       child: MaterialApp(
-        title: 'حلق القرآن',
+        title: 'نظام المنارة',
         debugShowCheckedModeBanner: false,
         locale: const Locale('ar'),
         supportedLocales: const [Locale('ar'), Locale('en')],

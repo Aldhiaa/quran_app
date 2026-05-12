@@ -1,8 +1,9 @@
 import 'package:flutter/foundation.dart';
+
+import '../models/auth/auth_user.dart';
 import '../services/auth_service.dart';
-import '../services/student_service.dart';
 import '../services/communication_service.dart';
-import '../models/student_model.dart';
+import '../services/student_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService;
@@ -13,7 +14,7 @@ class AuthProvider with ChangeNotifier {
   bool _isAuthenticated = false;
   bool _isDemo = false;
   String? _errorMessage;
-  StudentModel? _user;
+  AuthUser? _user;
 
   AuthProvider({
     AuthService? authService,
@@ -27,27 +28,30 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
   bool get isDemo => _isDemo;
   String? get errorMessage => _errorMessage;
-  StudentModel? get user => _user;
-  String get role => _user?.role ?? 'student';
+  AuthUser? get user => _user;
+  String get role => _user?.role ?? 'guest';
+
+  bool get isStudent => role == 'student';
+  bool get isTeacher => role == 'teacher';
+  bool get isSupervisor => role == 'center_supervisor';
+  bool get isGuide => role == 'guide';
 
   StudentService get studentService => _studentService;
   CommunicationService get communicationService => _communicationService;
 
   Future<void> login(String email, String password) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    _setLoading();
 
     try {
       final authData = await _authService.login(email, password);
       final userData = await _authService.getCurrentUser();
-
-      if (userData != null) {
-        _user = StudentModel.fromJson(userData);
-        _isAuthenticated = true;
-      }
+      _user = AuthUser.fromJson(userData ?? authData);
+      _isAuthenticated = true;
+      _isDemo = false;
     } catch (e) {
       _errorMessage = e.toString();
+      _isAuthenticated = false;
+      _user = null;
     } finally {
       _isLoading = false;
       notifyListeners();
@@ -55,24 +59,21 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> loginDemo({String role = 'student'}) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-    await Future.delayed(const Duration(milliseconds: 400));
-    final name = switch (role) {
-      'teacher' => 'أ. سعد القحطاني',
-      'center_supervisor' => 'أ. محمد العمري',
-      'guide' => 'أ. منى السبيعي',
-      _ => 'أحمد العتيبي',
-    };
-    _user = StudentModel(
+    _setLoading();
+    await Future.delayed(const Duration(milliseconds: 250));
+
+    _user = AuthUser(
       id: 1,
-      name: name,
+      name: switch (role) {
+        'teacher' => 'أ. سعد القحطاني',
+        'center_supervisor' => 'أ. محمد العمري',
+        'guide' => 'أ. منى السبيعي',
+        _ => 'أحمد العتيبي',
+      },
       email: 'demo@quran.app',
-      progress: 0.65,
-      parts: '15',
-      status: 'نشط',
       role: role,
+      centerIds: role == 'center_supervisor' ? const [1, 2] : const [],
+      circleIds: role == 'teacher' || role == 'student' ? const [1] : const [],
     );
     _isAuthenticated = true;
     _isDemo = true;
@@ -85,7 +86,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final userData = await _authService.getCurrentUser();
       if (userData != null) {
-        _user = StudentModel.fromJson(userData);
+        _user = AuthUser.fromJson(userData);
         notifyListeners();
       }
     } catch (_) {}
@@ -101,26 +102,30 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> checkAuthStatus() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
+    _setLoading();
 
     try {
       final userData = await _authService.getCurrentUser();
       if (userData != null) {
-        _user = StudentModel.fromJson(userData);
+        _user = AuthUser.fromJson(userData);
         _isAuthenticated = true;
       } else {
         _isAuthenticated = false;
         _user = null;
       }
-    } catch (e) {
+    } catch (_) {
       _isAuthenticated = false;
       _user = null;
     } finally {
       _isLoading = false;
       notifyListeners();
     }
+  }
+
+  void _setLoading() {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
   }
 
   @override
@@ -131,3 +136,4 @@ class AuthProvider with ChangeNotifier {
     super.dispose();
   }
 }
+

@@ -1,6 +1,6 @@
-# Quran Mobile UI
+# نظام المنارة - Quran Mobile UI
 
-Flutter mobile app for the Quran education system (teachers & students).
+Flutter mobile app for the Quran education system covering students, teachers, center supervisors, and guide supervisors.
 
 ## Setup
 
@@ -27,6 +27,7 @@ flutter run
 
 ## Architecture
 - **API Base URL**: `https://baherit.tech/api/v1` (configurable in `lib/core/api_constants.dart`)
-- **Auth**: Token-based via Sanctum (`POST /auth/token`)
+- **Auth**: Token-based via Sanctum (`POST /mobile/auth/login`, with legacy fallback to `POST /auth/token`)
 - **State**: Provider pattern
 - **Storage**: FlutterSecureStorage for tokens
+- **Mobile APIs**: Dedicated `/mobile/teacher`, `/mobile/supervisor`, `/mobile/guide`, and `/sync` endpoint groups
