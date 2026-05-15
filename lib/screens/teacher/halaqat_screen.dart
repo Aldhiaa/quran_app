@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/app_theme.dart';
+import '../../providers/teacher_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class HalaqatScreen extends StatefulWidget {
   const HalaqatScreen({super.key});
+
   @override
   State<HalaqatScreen> createState() => _HalaqatScreenState();
 }
@@ -12,31 +16,153 @@ class _HalaqatScreenState extends State<HalaqatScreen> {
   int _filter = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<TeacherProvider>().loadCircles();
+    });
+  }
+
+  Future<void> _refresh() async {
+    await context.read<TeacherProvider>().loadCircles();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final circles = [
-      _Circle('حلقة البقرة', 'صباحاً • السبت — الخميس', 24, .87, BadgeKind.success, 'نشطة'),
-      _Circle('حلقة آل عمران', 'مساءً • السبت — الأربعاء', 18, .72, BadgeKind.success, 'نشطة'),
-      _Circle('حلقة النساء', 'مساءً • الجمعة', 12, .35, BadgeKind.warning, 'متابعة'),
-    ];
+    final teacher = context.watch<TeacherProvider>();
+    final circles = teacher.circles;
+    final isLoading = teacher.isLoading;
+
+    // Filter circles
+    var filtered = circles;
+    if (_filter == 1) {
+      filtered = circles.where((c) => c['is_active'] == true || c['status'] == 'active').toList();
+    } else if (_filter == 2) {
+      filtered = circles.where((c) => c['status'] == 'needs_followup').toList();
+    }
 
     return GreenHeaderScaffold(
-      title: 'حلقاتي',
+      title: 'الحلقات',
       showBack: false,
-      headerExtra: SearchFilterBar(hint: 'بحث عن حلقة', onChanged: (_) {}),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-        children: [
-          FilterChipsBar(
-            items: const ['الكل', 'نشطة', 'متابعة', 'منتهية'],
-            selected: _filter,
-            onChanged: (i) => setState(() => _filter = i),
-          ),
-          const SizedBox(height: 12),
-          ...circles.map((c) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _CircleListCard(circle: c),
-              )),
-        ],
+      headerExtra: SearchFilterBar(
+        hint: 'بحث عن حلقة',
+        onChanged: (_) {},
+      ),
+      child: RefreshIndicator(
+        onRefresh: _refresh,
+        child: ListView(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+          children: [
+            FilterChipsBar(
+              items: const ['الكل', 'نشطة', 'متابعة'],
+              selected: _filter,
+              onChanged: (i) => setState(() => _filter = i),
+            ),
+            const SizedBox(height: 12),
+
+            if (isLoading && filtered.isEmpty)
+              const Center(child: Padding(
+                padding: EdgeInsets.all(40),
+                child: CircularProgressIndicator(),
+              ))
+            else if (filtered.isEmpty)
+              const AppCard(
+                child: Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Column(children: [
+                    Icon(Icons.menu_book_rounded, size: 48, color: AppColors.muted),
+                    SizedBox(height: 12),
+                    Text('لا توجد حلقات',
+                        style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.muted)),
+                  ]),
+                ),
+              )
+            else
+              ...filtered.map((circle) {
+                final name = circle['name'] as String? ?? 'حلقة';
+                final schedule = circle['schedule'] as String? ?? circle['time'] as String? ?? '—';
+                final studentCount = circle['students_count'] as int? ??
+                    circle['active_students_count'] as int? ??
+                    0;
+                final progress = (circle['average_progress'] as num?)?.toDouble() ?? 0.0;
+                final isActive = circle['is_active'] as bool? ?? true;
+                final statusText = isActive ? 'نشطة' : 'متوقفة';
+                final statusKind = isActive ? BadgeKind.success : BadgeKind.warning;
+
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: AppCard(
+                    onTap: () {
+                      teacher.selectCircle(circle);
+                      Navigator.pushNamed(context, '/teacher/daily-followup');
+                    },
+                    padding: const EdgeInsets.all(14),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(children: [
+                          Container(
+                            width: 44,
+                            height: 44,
+                            decoration: BoxDecoration(
+                              color: AppColors.primary.withValues(alpha: .1),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            alignment: Alignment.center,
+                            child: const Icon(Icons.menu_book_rounded,
+                                color: AppColors.primary, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(name,
+                                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
+                                const SizedBox(height: 2),
+                                Text(schedule,
+                                    style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                              ],
+                            ),
+                          ),
+                          StatusBadge(text: statusText, kind: statusKind),
+                        ]),
+                        const SizedBox(height: 12),
+                        Row(children: [
+                          _CircleStat(label: 'الطلاب', value: '$studentCount'),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(children: [
+                                  const Text('المستوى',
+                                      style: TextStyle(color: AppColors.muted, fontSize: 11)),
+                                  const Spacer(),
+                                  Text('${(progress * 100).round()}٪',
+                                      style: const TextStyle(
+                                          fontWeight: FontWeight.w700, fontSize: 11)),
+                                ]),
+                                const SizedBox(height: 4),
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(50),
+                                  child: LinearProgressIndicator(
+                                    value: progress,
+                                    minHeight: 5,
+                                    backgroundColor: AppColors.primary.withValues(alpha: .1),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ]),
+                      ],
+                    ),
+                  ),
+                );
+              }),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         backgroundColor: AppColors.primary,
@@ -47,80 +173,21 @@ class _HalaqatScreenState extends State<HalaqatScreen> {
   }
 }
 
-class _Circle {
-  final String title;
-  final String schedule;
-  final int students;
-  final double progress;
-  final BadgeKind kind;
-  final String status;
-  const _Circle(this.title, this.schedule, this.students, this.progress, this.kind, this.status);
-}
+class _CircleStat extends StatelessWidget {
+  final String label;
+  final String value;
 
-class _CircleListCard extends StatelessWidget {
-  final _Circle circle;
-  const _CircleListCard({required this.circle});
+  const _CircleStat({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
-      onTap: () => Navigator.pushNamed(context, '/teacher/halaqat'),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(children: [
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withValues(alpha: .12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              alignment: Alignment.center,
-              child: const Icon(Icons.menu_book_rounded, color: AppColors.primary),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(circle.title, style: const TextStyle(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 3),
-                  Text(circle.schedule, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-                ],
-              ),
-            ),
-            StatusBadge(text: circle.status, kind: circle.kind),
-          ]),
-          const SizedBox(height: 12),
-          Row(children: [
-            ProgressRing(value: circle.progress, size: 56, strokeWidth: 7),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(children: [
-                    const Icon(Icons.groups_rounded, size: 16, color: AppColors.muted),
-                    const SizedBox(width: 4),
-                    Text('${circle.students} طالب',
-                        style: const TextStyle(color: AppColors.muted, fontSize: 12.5)),
-                    const Spacer(),
-                    Text('${(circle.progress * 100).round()}٪ متوسط الحفظ',
-                        style: const TextStyle(
-                            color: AppColors.primary, fontWeight: FontWeight.w700, fontSize: 12)),
-                  ]),
-                  const SizedBox(height: 8),
-                  ClipRRect(
-                    borderRadius: BorderRadius.circular(50),
-                    child: LinearProgressIndicator(value: circle.progress, minHeight: 6),
-                  ),
-                ],
-              ),
-            ),
-          ]),
-        ],
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(value,
+            style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.primary, fontSize: 18)),
+        Text(label, style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+      ],
     );
   }
 }

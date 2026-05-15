@@ -1,158 +1,286 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+
 import '../../core/app_theme.dart';
+import '../../providers/teacher_provider.dart';
 import '../../widgets/common_widgets.dart';
 
+/// Attendance entry screen where teacher can mark attendance for all students.
+/// Connected to the TeacherProvider for real data.
 class AttendanceEntryScreen extends StatefulWidget {
   const AttendanceEntryScreen({super.key});
+
   @override
   State<AttendanceEntryScreen> createState() => _AttendanceEntryScreenState();
 }
 
 class _AttendanceEntryScreenState extends State<AttendanceEntryScreen> {
-  static const _names = [
-    'أحمد محمد العتيبي',
-    'عبدالله سعد القحطاني',
-    'محمد فهد الدوسري',
-    'سعد ناصر الشهري',
-    'فيصل أحمد الزهراني',
-    'يوسف خالد المالكي',
-    'إبراهيم علي البقمي',
-  ];
-  late List<int> _status; // 0 present, 1 late, 2 excused, 3 absent
+  int _selectedCircleIndex = 0;
+  List<Map<String, dynamic>> _students = [];
+  List<String> _statuses = [];
+  bool _loading = false;
+
+  // Attendance statuses
+  static const _statusLabels = ['حاضر', 'متأخر', 'معذور', 'غائب'];
+  static const _statusValues = ['present', 'late', 'excused', 'absent'];
+  static const _statusColors = [AppColors.success, AppColors.warning, AppColors.info, AppColors.danger];
+  static const _statusIcons = [Icons.check_circle, Icons.access_time, Icons.person_off, Icons.cancel];
 
   @override
   void initState() {
     super.initState();
-    _status = List<int>.filled(_names.length, 0);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadStudents();
+    });
   }
 
-  int get _count =>
-      _status.where((s) => s == 0).length + _status.where((s) => s == 1).length;
+  Future<void> _loadStudents() async {
+    final teacher = context.read<TeacherProvider>();
+    setState(() => _loading = true);
+
+    // Load circles if not already loaded
+    if (teacher.circles.isEmpty) {
+      await teacher.loadCircles();
+    }
+
+    if (teacher.circles.isNotEmpty) {
+      final circleId = teacher.circles[_selectedCircleIndex]['id'] as int;
+      await teacher.loadCircleStudents(circleId);
+      setState(() {
+        _students = List.from(teacher.circleStudents);
+        _statuses = List.filled(_students.length, 'present');
+        _loading = false;
+      });
+    } else {
+      setState(() => _loading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
+    final teacher = context.watch<TeacherProvider>();
+    final circles = teacher.circles;
+
+    // Count statuses
+    final present = _statuses.where((s) => s == 'present').length;
+    final late = _statuses.where((s) => s == 'late').length;
+    final excused = _statuses.where((s) => s == 'excused').length;
+    final absent = _statuses.where((s) => s == 'absent').length;
+
     return GreenHeaderScaffold(
       title: 'تسجيل الحضور',
       headerExtra: AppCard(
-        color: Colors.white.withValues(alpha: .1),
+        color: Colors.white.withValues(alpha: .12),
         padding: const EdgeInsets.all(12),
         child: Row(children: [
-          const _Counter(label: 'حاضر', color: AppColors.success, icon: Icons.check_circle_rounded),
+          const Icon(Icons.calendar_today_rounded, color: AppColors.accentGold),
           const SizedBox(width: 8),
-          const _Counter(label: 'متأخر', color: AppColors.warning, icon: Icons.schedule_rounded),
-          const SizedBox(width: 8),
-          const _Counter(label: 'مأذون', color: AppColors.info, icon: Icons.event_available_rounded),
-          const SizedBox(width: 8),
-          const _Counter(label: 'غائب', color: AppColors.danger, icon: Icons.cancel_rounded),
+          Text('اليوم',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
+          const Spacer(),
+          Text('$present / ${_students.length}',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
         ]),
       ),
-      bottomNavigationBar: const DraftSubmitBar(submitLabel: 'حفظ الحضور'),
-      child: ListView.separated(
+      bottomNavigationBar: _buildBottomBar(teacher),
+      child: ListView(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-        itemCount: _names.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
-        itemBuilder: (_, i) => _StudentAttendanceCard(
-          name: _names[i],
-          status: _status[i],
-          onChange: (v) => setState(() => _status[i] = v),
-        ),
-      ),
-    );
-  }
-}
-
-class _Counter extends StatelessWidget {
-  final String label;
-  final Color color;
-  final IconData icon;
-  const _Counter({required this.label, required this.color, required this.icon});
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        decoration: BoxDecoration(
-          color: Colors.white.withValues(alpha: .08),
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(color: Colors.white.withValues(alpha: .2)),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 18),
-            const SizedBox(height: 2),
-            Text(label,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 11.5)),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _StudentAttendanceCard extends StatelessWidget {
-  final String name;
-  final int status;
-  final ValueChanged<int> onChange;
-  const _StudentAttendanceCard({required this.name, required this.status, required this.onChange});
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      padding: const EdgeInsets.all(12),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: AppColors.accentGold.withValues(alpha: .18),
-                shape: BoxShape.circle,
+          // Circle selector
+          if (circles.isNotEmpty)
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text('اختر الحلقة', style: TextStyle(fontWeight: FontWeight.w800)),
+                  const SizedBox(height: 10),
+                  FilterChipsBar(
+                    items: circles.map((c) => c['name'] as String? ?? 'حلقة').toList(),
+                    selected: _selectedCircleIndex,
+                    onChanged: (i) {
+                      setState(() {
+                        _selectedCircleIndex = i;
+                        _loading = true;
+                      });
+                      _loadStudents();
+                    },
+                  ),
+                ],
               ),
-              alignment: Alignment.center,
-              child: const Icon(Icons.person_rounded, color: AppColors.primary, size: 20),
             ),
-            const SizedBox(width: 10),
-            Expanded(child: Text(name, style: const TextStyle(fontWeight: FontWeight.w800))),
-          ]),
-          const SizedBox(height: 10),
-          Row(children: [
-            _opt(0, 'حاضر', AppColors.success),
-            const SizedBox(width: 6),
-            _opt(1, 'متأخر', AppColors.warning),
-            const SizedBox(width: 6),
-            _opt(2, 'مأذون', AppColors.info),
-            const SizedBox(width: 6),
-            _opt(3, 'غائب', AppColors.danger),
-          ]),
+          const SizedBox(height: 12),
+
+          // Status summary
+          AppCard(
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _StatusSummary(label: 'حاضر', count: present, color: AppColors.success),
+                _StatusSummary(label: 'متأخر', count: late, color: AppColors.warning),
+                _StatusSummary(label: 'معذور', count: excused, color: AppColors.info),
+                _StatusSummary(label: 'غائب', count: absent, color: AppColors.danger),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          if (_loading)
+            const Center(child: Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(),
+            ))
+          else if (_students.isEmpty)
+            const AppCard(
+              child: Padding(
+                padding: EdgeInsets.all(24),
+                child: Column(children: [
+                  Icon(Icons.person_off_rounded, size: 48, color: AppColors.muted),
+                  SizedBox(height: 12),
+                  Text('لا يوجد طلاب',
+                      style: TextStyle(fontWeight: FontWeight.w700, color: AppColors.muted)),
+                ]),
+              ),
+            )
+          else
+            ...List.generate(_students.length, (i) {
+              final student = _students[i];
+              final name = student['full_name'] as String? ?? student['name'] as String? ?? 'طالب';
+              final statusIdx = _statusValues.indexOf(_statuses[i]);
+              final color = _statusColors[statusIdx >= 0 ? statusIdx : 0];
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: AppCard(
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  child: Row(children: [
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: .15),
+                        shape: BoxShape.circle,
+                      ),
+                      alignment: Alignment.center,
+                      child: Icon(_statusIcons[statusIdx >= 0 ? statusIdx : 0],
+                          color: color, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(name,
+                          style: const TextStyle(fontWeight: FontWeight.w700)),
+                    ),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: List.generate(4, (j) {
+                        final selected = _statuses[i] == _statusValues[j];
+                        return GestureDetector(
+                          onTap: () => setState(() => _statuses[i] = _statusValues[j]),
+                          child: Container(
+                            margin: const EdgeInsets.symmetric(horizontal: 2),
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: selected
+                                  ? _statusColors[j].withValues(alpha: .15)
+                                  : Colors.transparent,
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(
+                                color: selected ? _statusColors[j] : Colors.grey.shade200,
+                                width: selected ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Text(
+                              _statusLabels[j],
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: selected ? _statusColors[j] : AppColors.muted,
+                              ),
+                            ),
+                          ),
+                        );
+                      }),
+                    ),
+                  ]),
+                ),
+              );
+            }),
         ],
       ),
     );
   }
 
-  Widget _opt(int v, String label, Color c) {
-    final active = status == v;
-    return Expanded(
-      child: InkWell(
-        borderRadius: BorderRadius.circular(10),
-        onTap: () => onChange(v),
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 8),
-          decoration: BoxDecoration(
-            color: active ? c : Colors.white,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: active ? c : AppColors.border),
+  Widget _buildBottomBar(TeacherProvider teacher) {
+    if (_students.isEmpty) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 16),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 8, offset: Offset(0, -2))],
+      ),
+      child: SafeArea(
+        top: false,
+        child: SizedBox(
+          width: double.infinity,
+          height: 48,
+          child: ElevatedButton.icon(
+            onPressed: _loading
+                ? null
+                : () async {
+                    if (teacher.circles.isEmpty) return;
+                    final circleId = teacher.circles[_selectedCircleIndex]['id'] as int;
+
+                    final entries = List.generate(_students.length, (i) => {
+                      'student_id': _students[i]['id'],
+                      'status': _statuses[i],
+                    });
+
+                    final success = await teacher.submitAttendance(
+                      circleId: circleId,
+                      date: DateTime.now().toIso8601String().split('T')[0],
+                      entries: entries,
+                    );
+
+                    if (mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(success ? 'تم حفظ الحضور بنجاح' : 'فشل حفظ الحضور'),
+                          backgroundColor: success ? AppColors.success : AppColors.danger,
+                        ),
+                      );
+                      if (success) Navigator.pop(context);
+                    }
+                  },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            icon: const Icon(Icons.save_rounded),
+            label: const Text('حفظ الحضور', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 15)),
           ),
-          alignment: Alignment.center,
-          child: Text(label,
-              style: TextStyle(
-                  color: active ? Colors.white : c,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 12)),
         ),
       ),
+    );
+  }
+}
+
+class _StatusSummary extends StatelessWidget {
+  final String label;
+  final int count;
+  final Color color;
+
+  const _StatusSummary({required this.label, required this.count, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text('$count', style: TextStyle(fontWeight: FontWeight.w800, color: color, fontSize: 18)),
+        Text(label,
+            style: const TextStyle(color: AppColors.muted, fontSize: 11)),
+      ],
     );
   }
 }
