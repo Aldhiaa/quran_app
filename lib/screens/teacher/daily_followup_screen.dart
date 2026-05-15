@@ -77,8 +77,10 @@ class _DailyFollowupScreenState extends State<DailyFollowupScreen> {
 
     final circleName = circle?['name'] ?? circle?['circle_name'] ?? 'الحلقة';
     final studentCount = circle?['students_count'] ?? circle?['active_students_count'] ?? entries.length;
-    final sessionDate = session?['session_date'] ?? session?['date_hijri'] ?? 'اليوم';
-    final sessionStatus = session?['status'] as String?;
+    // Session data is nested under 'session' when fetched from getTodaySession response
+    final sessionData = session?['session'] as Map<String, dynamic>?;
+    final sessionDate = sessionData?['session_date'] ?? session?['hijri_date'] ?? 'اليوم';
+    final sessionStatus = sessionData?['status'] as String?;
 
     return GreenHeaderScaffold(
       title: 'دفتر المتابعة',
@@ -157,9 +159,9 @@ class _DailyFollowupScreenState extends State<DailyFollowupScreen> {
 
     // Count attendance summary
     final present = entries.where((e) => e['attendance_status'] == 'present').length;
-    final absent = entries.where((e) => e['attendance_status'] == 'absent').length;
+    final absent = entries.where((e) => e['attendance_status'] == 'absent_unexcused').length;
     final late = entries.where((e) => e['attendance_status'] == 'late').length;
-    final excused = entries.where((e) => e['attendance_status'] == 'excused').length;
+    final excused = entries.where((e) => e['attendance_status'] == 'absent_excused').length;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
@@ -353,12 +355,12 @@ class _StudentEntryCard extends StatelessWidget {
         badgeKind = BadgeKind.warning;
         statusColor = AppColors.warning;
         break;
-      case 'excused':
+      case 'absent_excused':
         statusText = 'معذور';
         badgeKind = BadgeKind.info;
         statusColor = AppColors.info;
         break;
-      case 'absent':
+      case 'absent_unexcused':
         statusText = 'غائب';
         badgeKind = BadgeKind.danger;
         statusColor = AppColors.danger;
@@ -370,10 +372,10 @@ class _StudentEntryCard extends StatelessWidget {
     }
 
     // Build memorization range text
-    final fromSurah = entry['new_memorization_from_surah'] as int?;
-    final fromAyah = entry['new_memorization_from_ayah'] as int?;
-    final toSurah = entry['new_memorization_to_surah'] as int?;
-    final toAyah = entry['new_memorization_to_ayah'] as int?;
+    final fromSurah = entry['memorization_from_surah'] as int?;
+    final fromAyah = entry['memorization_from_ayah'] as int?;
+    final toSurah = entry['memorization_to_surah'] as int?;
+    final toAyah = entry['memorization_to_ayah'] as int?;
 
     String memRange = '';
     if (fromSurah != null && toSurah != null) {
@@ -388,14 +390,37 @@ class _StudentEntryCard extends StatelessWidget {
       memRange = 'لم يُدخل';
     }
 
-    // Quality
-    final quality = (entry['performance'] as num?)?.toDouble() ?? 0.0;
+    // Quality — convert string enum back to display value if needed
+    final qualityRaw = entry['memorization_performance'];
+    double quality = 0.0;
+    if (qualityRaw is String) {
+      // Backend returned a string enum — map to progress display
+      switch (qualityRaw) {
+        case 'excellent':
+          quality = 1.0;
+          break;
+        case 'very_good':
+          quality = 0.8;
+          break;
+        case 'good':
+          quality = 0.6;
+          break;
+        case 'acceptable':
+          quality = 0.4;
+          break;
+        case 'poor':
+          quality = 0.2;
+          break;
+      }
+    } else if (qualityRaw is num) {
+      quality = qualityRaw.toDouble();
+    }
 
     // Flags
     final hasWeakness = entry['weakness_flag'] == true;
     final hasParentContact = entry['parent_contacted'] == true;
     final hasNotes = (entry['notes'] as String?)?.isNotEmpty == true ||
-        (entry['tajweed_observations'] as String?)?.isNotEmpty == true;
+        (entry['tajweed_observation'] as String?)?.isNotEmpty == true;
 
     return AppCard(
       onTap: onTap,
@@ -553,10 +578,10 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
     _data = Map<String, dynamic>.from(widget.entry);
 
     // Initialize controllers from existing data
-    _tajweedCtrl.text = _data['tajweed_observations'] as String? ?? '';
+    _tajweedCtrl.text = _data['tajweed_observation'] as String? ?? '';
     _notesCtrl.text = _data['notes'] as String? ?? '';
-    _newFromAyahCtrl.text = _data['new_memorization_from_ayah']?.toString() ?? '';
-    _newToAyahCtrl.text = _data['new_memorization_to_ayah']?.toString() ?? '';
+    _newFromAyahCtrl.text = _data['memorization_from_ayah']?.toString() ?? '';
+    _newToAyahCtrl.text = _data['memorization_to_ayah']?.toString() ?? '';
     _reviewFromAyahCtrl.text = _data['review_from_ayah']?.toString() ?? '';
     _reviewToAyahCtrl.text = _data['review_to_ayah']?.toString() ?? '';
   }
@@ -576,7 +601,29 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
   Widget build(BuildContext context) {
     final name = _data['student_name'] as String? ?? 'طالب';
     final status = _data['attendance_status'] as String? ?? 'present';
-    final quality = (_data['performance'] as num?)?.toDouble() ?? 0.0;
+    final qualityRaw = _data['memorization_performance'];
+    double quality = 0.0;
+    if (qualityRaw is double || qualityRaw is int) {
+      quality = (qualityRaw as num).toDouble();
+    } else if (qualityRaw is String) {
+      switch (qualityRaw) {
+        case 'excellent':
+          quality = 1.0;
+          break;
+        case 'very_good':
+          quality = 0.8;
+          break;
+        case 'good':
+          quality = 0.6;
+          break;
+        case 'acceptable':
+          quality = 0.4;
+          break;
+        case 'poor':
+          quality = 0.2;
+          break;
+      }
+    }
     final hasWeakness = _data['weakness_flag'] == true;
     final hasParentContact = _data['parent_contacted'] == true;
 
@@ -656,16 +703,16 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
                       label: 'معذور',
                       icon: Icons.person_off,
                       color: AppColors.info,
-                      selected: status == 'excused',
-                      onTap: () => setState(() => _data['attendance_status'] = 'excused'),
+                      selected: status == 'absent_excused',
+                      onTap: () => setState(() => _data['attendance_status'] = 'absent_excused'),
                     ),
                     const SizedBox(width: 6),
                     _AttendanceOption(
                       label: 'غائب',
                       icon: Icons.cancel,
                       color: AppColors.danger,
-                      selected: status == 'absent',
-                      onTap: () => setState(() => _data['attendance_status'] = 'absent'),
+                      selected: status == 'absent_unexcused',
+                      onTap: () => setState(() => _data['attendance_status'] = 'absent_unexcused'),
                     ),
                   ]),
                 ],
@@ -690,15 +737,15 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
                     const Text('من:', style: TextStyle(fontSize: 12, color: AppColors.muted)),
                     const SizedBox(width: 8),
                     Expanded(child: _SurahDropdown(
-                      value: _data['new_memorization_from_surah'] as int?,
-                      onChanged: (v) => _data['new_memorization_from_surah'] = v,
+                      value: _data['memorization_from_surah'] as int?,
+                      onChanged: (v) => _data['memorization_from_surah'] = v,
                     )),
                     const SizedBox(width: 6),
                     SizedBox(
                       width: 60,
                       child: _AyahField(
                         controller: _newFromAyahCtrl,
-                        onChanged: (v) => _data['new_memorization_from_ayah'] = v,
+                        onChanged: (v) => _data['memorization_from_ayah'] = v,
                       ),
                     ),
                   ]),
@@ -708,15 +755,15 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
                     const Text('إلى:', style: TextStyle(fontSize: 12, color: AppColors.muted)),
                     const SizedBox(width: 8),
                     Expanded(child: _SurahDropdown(
-                      value: _data['new_memorization_to_surah'] as int?,
-                      onChanged: (v) => _data['new_memorization_to_surah'] = v,
+                      value: _data['memorization_to_surah'] as int?,
+                      onChanged: (v) => _data['memorization_to_surah'] = v,
                     )),
                     const SizedBox(width: 6),
                     SizedBox(
                       width: 60,
                       child: _AyahField(
                         controller: _newToAyahCtrl,
-                        onChanged: (v) => _data['new_memorization_to_ayah'] = v,
+                        onChanged: (v) => _data['memorization_to_ayah'] = v,
                       ),
                     ),
                   ]),
@@ -796,7 +843,7 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
                         divisions: 20,
                         activeColor: AppColors.primary,
                         label: '${(quality * 100).round()}%',
-                        onChanged: (v) => setState(() => _data['performance'] = v),
+                        onChanged: (v) => setState(() => _data['memorization_performance'] = v),
                       ),
                     ),
                     SizedBox(
@@ -827,7 +874,7 @@ class _StudentEntrySheetState extends State<_StudentEntrySheet> {
                       contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                     ),
                     textInputAction: TextInputAction.next,
-                    onChanged: (v) => _data['tajweed_observations'] = v,
+                    onChanged: (v) => _data['tajweed_observation'] = v,
                   ),
                 ],
               ),

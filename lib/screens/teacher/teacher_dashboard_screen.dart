@@ -34,31 +34,41 @@ class _TeacherDashboardScreenState extends State<TeacherDashboardScreen> {
     final pending = teacher.pendingActions;
     final isLoading = teacher.isLoading;
 
-    // Extract KPIs from home data with fallbacks
+    // Extract KPIs from home data — matching backend getHomeDashboard response keys
     final circlesCount = home['circles_count'] ??
-        home['assigned_circles_count'] ??
-        home['circles'] is List ? (home['circles'] as List).length : 0;
+        (home['today_circles'] is List ? (home['today_circles'] as List).length : 0);
 
-    final studentsCount = home['students_count'] ??
-        home['active_students_count'] ?? '—';
+    final studentsCount = home['students_count'] ?? '—';
 
-    final todayPresent = home['today_present_count'] ??
-        home['present_count'] ?? '—';
+    final todayPresent = home['today_present_count'] ?? '—';
 
-    final attendanceRate = home['attendance_rate']?.toString() ??
-        home['today_attendance_rate']?.toString() ?? '—';
+    final attendanceRate = home['attendance_rate']?.toString() ?? '—';
 
-    final pendingReports = pending['missing_daily_reports'] ?? pending['pending_reports'] ?? 0;
+    final pendingReports = home['pending_daily_reports'] ?? pending['missing_daily_reports'] ?? 0;
     final pendingEvaluations = pending['pending_weekly_evaluations'] ?? 0;
-    final pendingTests = pending['upcoming_monthly_tests'] ?? 0;
+    final pendingTests = pending['pending_monthly_tests'] ??
+        (home['upcoming_monthly_tests'] is List ? (home['upcoming_monthly_tests'] as List).length : 0);
 
-    // Today's session info
+    // Today's session info — backend returns a DailySession model instance
     final todaySession = home['today_session'] as Map<String, dynamic>?;
-    final sessionCircleName = todaySession?['circle_name'] ?? todaySession?['circle']?['name'] ?? 'حلقة اليوم';
-    final sessionPresent = todaySession?['present_count'] ?? todaySession?['attendance']?['present'] ?? 0;
-    final sessionTotal = todaySession?['total_count'] ?? todaySession?['attendance']?['total'] ?? 0;
-    final sessionProgress = sessionTotal > 0 ? (sessionPresent as int) / (sessionTotal as int) : 0.0;
-    final sessionTime = todaySession?['time_range'] ?? 'من 4:30 — إلى 6:00';
+    String sessionCircleName = 'حلقة اليوم';
+    int sessionPresent = 0;
+    int sessionTotal = 0;
+    double sessionProgress = 0.0;
+    String sessionTime = '';
+
+    if (todaySession != null) {
+      sessionCircleName = todaySession['circle_name'] ??
+          (todaySession['circle'] is Map ? (todaySession['circle'] as Map)['name'] as String? : null) ??
+          'حلقة اليوم';
+      final entries = todaySession['entries'];
+      if (entries is List) {
+        sessionTotal = entries.length;
+        sessionPresent = entries.where((e) =>
+            e is Map && e['attendance_status'] == 'present').length;
+      }
+      sessionProgress = sessionTotal > 0 ? sessionPresent / sessionTotal : 0.0;
+    }
 
     return GreenHeaderScaffold(
       title: 'لوحة المعلم',

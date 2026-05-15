@@ -2,6 +2,16 @@ import 'package:flutter/foundation.dart';
 
 import '../services/teacher_service.dart';
 
+/// Maps a memorization performance double (0.0-1.0 from slider) to backend string enum.
+String _performanceToEnum(double? value) {
+  if (value == null) return 'acceptable';
+  if (value >= 0.8) return 'excellent';
+  if (value >= 0.6) return 'very_good';
+  if (value >= 0.4) return 'good';
+  if (value >= 0.2) return 'acceptable';
+  return 'poor';
+}
+
 class TeacherProvider with ChangeNotifier {
   final TeacherService _service;
 
@@ -102,16 +112,34 @@ class TeacherProvider with ChangeNotifier {
   Future<void> loadTodaySession(int circleId) async {
     await _run(() async {
       todaySession = await _service.getTodaySession(circleId);
-      if (todaySession != null) {
-        final rawEntries = todaySession!['entries'];
-        if (rawEntries != null && rawEntries is List) {
-          sessionEntries = rawEntries
-              .map((e) => e is Map<String, dynamic> ? e : <String, dynamic>{})
+
+      // Backend returns { session: {...entries: [...]}, students: [...] }
+      final sessionData = todaySession;
+      if (sessionData != null) {
+        final session = sessionData['session'] as Map<String, dynamic>?;
+        if (session != null) {
+          final rawEntries = session['entries'];
+          if (rawEntries != null && rawEntries is List && rawEntries.isNotEmpty) {
+            sessionEntries = rawEntries
+                .map((e) => e is Map<String, dynamic> ? e : <String, dynamic>{})
+                .toList();
+            notifyListeners();
+            return;
+          }
+        }
+
+        // No existing entries — get students list from response to build empty entries
+        final rawStudents = sessionData['students'];
+        if (rawStudents != null && rawStudents is List && rawStudents.isNotEmpty) {
+          sessionEntries = rawStudents
+              .map((s) => s is Map<String, dynamic> ? _buildEmptyEntry(s) : <String, dynamic>{})
               .toList();
+          notifyListeners();
           return;
         }
       }
-      // No existing entries — load students to build empty entries
+
+      // Fallback: load students from circles API
       await loadCircleStudents(circleId);
       sessionEntries = circleStudents.map((s) => _buildEmptyEntry(s)).toList();
     });
@@ -135,13 +163,24 @@ class TeacherProvider with ChangeNotifier {
 
   /// Save all session entries as draft.
   Future<bool> saveSessionAsDraft() async {
-    if (todaySession == null || todaySession!['id'] == null) return false;
+    if (todaySession == null) return false;
 
-    final sessionId = _toInt(todaySession!['id']);
+    // Get session ID from nested or flat structure
+    final session = todaySession!['session'] as Map<String, dynamic>? ?? todaySession!;
+    final sessionId = _toInt(session['id']);
+    if (sessionId <= 0) return false;
+
     final entries = sessionEntries.map((e) {
-      // Strip display-only fields before sending to API
       final entry = Map<String, dynamic>.from(e);
+      // Remove display-only fields
       entry.remove('student_name');
+
+      // Convert performance slider value (0.0-1.0 double) → backend string enum
+      final perf = entry['memorization_performance'];
+      if (perf is double || perf is int) {
+        entry['memorization_performance'] = _performanceToEnum((perf as num).toDouble());
+      }
+
       return entry;
     }).toList();
 
@@ -157,13 +196,16 @@ class TeacherProvider with ChangeNotifier {
 
   /// Submit the session (save entries + finalize).
   Future<bool> submitSession() async {
-    if (todaySession == null || todaySession!['id'] == null) return false;
-
-    final sessionId = _toInt(todaySession!['id']);
+    if (todaySession == null) return false;
 
     // First save entries
     final saved = await saveSessionAsDraft();
     if (!saved) return false;
+
+    // Get session ID from nested or flat structure
+    final session = todaySession!['session'] as Map<String, dynamic>? ?? todaySession!;
+    final sessionId = _toInt(session['id']);
+    if (sessionId <= 0) return false;
 
     // Then submit
     try {
@@ -296,21 +338,24 @@ class TeacherProvider with ChangeNotifier {
   // ═══════════════════════════════════════════
 
   /// Build an empty entry for a student, used when starting a new session.
+  /// Field names match the DailyStudentEntry model's $fillable.
   Map<String, dynamic> _buildEmptyEntry(Map<String, dynamic> student) {
     return {
       'student_id': student['id'],
       'student_name': student['full_name'] ?? student['name'] ?? '',
       'attendance_status': 'present',
-      'new_memorization_from_surah': null,
-      'new_memorization_from_ayah': null,
-      'new_memorization_to_surah': null,
-      'new_memorization_to_ayah': null,
+      'memorization_from_surah': null,
+      'memorization_from_ayah': null,
+      'memorization_to_surah': null,
+      'memorization_to_ayah': null,
+      'memorization_performance': null,
       'review_from_surah': null,
       'review_from_ayah': null,
       'review_to_surah': null,
       'review_to_ayah': null,
-      'performance': null,
-      'tajweed_observations': '',
+      'review_performance': null,
+      'tajweed_observation': '',
+      'tajweed_weakness': '',
       'notes': '',
       'weakness_flag': false,
       'parent_contacted': false,
