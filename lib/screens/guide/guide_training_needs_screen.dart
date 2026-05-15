@@ -1,54 +1,123 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
+import '../../providers/guide_provider.dart';
 import '../../widgets/common_widgets.dart';
 
-class GuideTrainingNeedsScreen extends StatelessWidget {
+class GuideTrainingNeedsScreen extends StatefulWidget {
   const GuideTrainingNeedsScreen({super.key});
+  @override
+  State<GuideTrainingNeedsScreen> createState() =>
+      _GuideTrainingNeedsScreenState();
+}
+
+class _GuideTrainingNeedsScreenState extends State<GuideTrainingNeedsScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<GuideProvider>().loadTrainingNeeds();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final needs = [
-      _N('تطوير أساليب التحفيز', 'يشمل: 11 معلمة', BadgeKind.warning, 'احتياج مرتفع'),
-      _N('إدارة الحلقة وتنظيم الوقت', 'يشمل: 7 معلمات', BadgeKind.info, 'احتياج متوسط'),
-      _N('أحكام التلاوة المتقدمة', 'يشمل: 5 معلمات', BadgeKind.danger, 'احتياج عاجل'),
-      _N('التعامل مع الحالات الخاصة', 'يشمل: 9 معلمات', BadgeKind.info, 'احتياج متوسط'),
-    ];
+    final guide = context.watch<GuideProvider>();
+
+    final openCount =
+        guide.trainingNeeds.where((n) => '${n['status'] ?? ''}' == 'open').length;
+    final highCount = guide.trainingNeeds
+        .where((n) => '${n['priority'] ?? ''}' == 'high')
+        .length;
+
     return GreenHeaderScaffold(
       title: 'الاحتياجات التدريبية',
       headerExtra: AppCard(
         color: Colors.white.withValues(alpha: .12),
         padding: const EdgeInsets.all(12),
-        child: Row(children: const [
-          Expanded(child: _Stat(label: 'احتياجات', value: '5', color: AppColors.accentGold, icon: Icons.psychology_alt_rounded)),
-          SizedBox(width: 8),
-          Expanded(child: _Stat(label: 'عاجلة', value: '2', color: AppColors.danger, icon: Icons.priority_high_rounded)),
-          SizedBox(width: 8),
-          Expanded(child: _Stat(label: 'مدرجة بالخطة', value: '3', color: AppColors.success, icon: Icons.task_alt_rounded)),
+        child: Row(children: [
+          Expanded(
+            child: _Stat(
+              label: 'احتياجات',
+              value: '${guide.trainingNeeds.length}',
+              color: AppColors.accentGold,
+              icon: Icons.psychology_alt_rounded,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _Stat(
+              label: 'عاجلة',
+              value: '$highCount',
+              color: AppColors.danger,
+              icon: Icons.priority_high_rounded,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _Stat(
+              label: 'مفتوحة',
+              value: '$openCount',
+              color: AppColors.success,
+              icon: Icons.task_alt_rounded,
+            ),
+          ),
         ]),
       ),
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-        itemCount: needs.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, i) => EntityListCard(
-          leading: Icons.psychology_alt_rounded,
-          leadingColor: badgeColor(needs[i].kind),
-          title: needs[i].title,
-          subtitle: needs[i].sub,
-          badgeText: needs[i].status,
-          badgeKind: needs[i].kind,
-        ),
-      ),
+      child: guide.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.separated(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              itemCount: guide.trainingNeeds.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 10),
+              itemBuilder: (_, i) {
+                final n = guide.trainingNeeds[i];
+                final priority = '${n['priority'] ?? 'medium'}';
+                return EntityListCard(
+                  leading: Icons.psychology_alt_rounded,
+                  leadingColor: _priorityColor(priority),
+                  title: '${n['title'] ?? ''}',
+                  subtitle: '${n['circle']['name'] ?? ''}',
+                  badgeText: _priorityLabel(priority),
+                  badgeKind: _priorityKind(priority),
+                );
+              },
+            ),
     );
   }
-}
 
-class _N {
-  final String title;
-  final String sub;
-  final BadgeKind kind;
-  final String status;
-  const _N(this.title, this.sub, this.kind, this.status);
+  Color _priorityColor(String p) {
+    switch (p) {
+      case 'high':
+        return AppColors.danger;
+      case 'medium':
+        return AppColors.warning;
+      default:
+        return AppColors.info;
+    }
+  }
+
+  String _priorityLabel(String p) {
+    switch (p) {
+      case 'high':
+        return 'عاجل';
+      case 'medium':
+        return 'متوسط';
+      default:
+        return 'عادي';
+    }
+  }
+
+  BadgeKind _priorityKind(String p) {
+    switch (p) {
+      case 'high':
+        return BadgeKind.danger;
+      case 'medium':
+        return BadgeKind.warning;
+      default:
+        return BadgeKind.info;
+    }
+  }
 }
 
 class _Stat extends StatelessWidget {
@@ -56,7 +125,11 @@ class _Stat extends StatelessWidget {
   final String value;
   final Color color;
   final IconData icon;
-  const _Stat({required this.label, required this.value, required this.color, required this.icon});
+  const _Stat(
+      {required this.label,
+      required this.value,
+      required this.color,
+      required this.icon});
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +145,15 @@ class _Stat extends StatelessWidget {
           Icon(icon, color: color, size: 18),
           const SizedBox(height: 4),
           Text(value,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
+              style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16)),
           Text(label,
-              style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600)),
+              style: const TextStyle(
+                  color: Colors.white70,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w600)),
         ],
       ),
     );

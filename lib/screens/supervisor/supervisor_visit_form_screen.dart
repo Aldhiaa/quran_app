@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
+import '../../providers/supervisor_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class SupervisorVisitFormScreen extends StatefulWidget {
-  const SupervisorVisitFormScreen({super.key});
+  final int? visitId;
+  const SupervisorVisitFormScreen({super.key, this.visitId});
   @override
   State<SupervisorVisitFormScreen> createState() => _SupervisorVisitFormScreenState();
 }

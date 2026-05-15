@@ -19,5 +19,8 @@ class GuideEndpoints {
   static String visitStudentsBulk(int visitId) => '/mobile/guide/visits/$visitId/students/bulk';
   static String submitVisit(int visitId) => '/mobile/guide/visits/$visitId/submit';
   static String approveVisit(int visitId) => '/mobile/guide/visits/$visitId/approve';
+  static const educationalSupervisions = '/mobile/guide/educational-supervisions';
+  static const recommendations = '/mobile/guide/recommendations';
+  static const reports = '/mobile/guide/reports';
 }
 

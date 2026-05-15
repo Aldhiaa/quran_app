@@ -10,6 +10,8 @@ class SupervisorService {
   SupervisorService({http.Client? httpClient, ApiClient? apiClient})
       : _apiClient = apiClient ?? ApiClient(httpClient: httpClient);
 
+  // ── Dashboard ─────────────────────────────────────────────────
+
   Future<Map<String, dynamic>> getHome() async {
     return ResponseUtils.dataMap(await _apiClient.get(SupervisorEndpoints.home));
   }
@@ -17,6 +19,8 @@ class SupervisorService {
   Future<Map<String, dynamic>> getSummary() async {
     return ResponseUtils.dataMap(await _apiClient.get(SupervisorEndpoints.summary));
   }
+
+  // ── Centers ───────────────────────────────────────────────────
 
   Future<List<Map<String, dynamic>>> getCenters() async {
     return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.centers));
@@ -26,6 +30,8 @@ class SupervisorService {
     return ResponseUtils.dataMap(await _apiClient.get(SupervisorEndpoints.center(id)));
   }
 
+  // ── Teachers & Circles ────────────────────────────────────────
+
   Future<List<Map<String, dynamic>>> getTeachers() async {
     return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.teachers));
   }
@@ -34,9 +40,13 @@ class SupervisorService {
     return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.circles));
   }
 
+  // ── Attendance ────────────────────────────────────────────────
+
   Future<List<Map<String, dynamic>>> getAttendanceAlerts() async {
     return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.attendanceAlerts));
   }
+
+  // ── Approvals ─────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> getPendingApprovals() async {
     return ResponseUtils.dataMap(await _apiClient.get(SupervisorEndpoints.pendingApprovals));
@@ -94,6 +104,8 @@ class SupervisorService {
     );
   }
 
+  // ── Tasks ─────────────────────────────────────────────────────
+
   Future<List<Map<String, dynamic>>> getTasks() async {
     return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.tasks));
   }
@@ -111,6 +123,8 @@ class SupervisorService {
     );
   }
 
+  // ── Center Requests ──────────────────────────────────────────
+
   Future<List<Map<String, dynamic>>> getCenterRequests() async {
     return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.centerRequests));
   }
@@ -127,5 +141,51 @@ class SupervisorService {
       ),
     );
   }
-}
 
+  // ── Visits ────────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getVisits() async {
+    return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.visits));
+  }
+
+  Future<Map<String, dynamic>> getVisitDetail(int visitId) async {
+    return ResponseUtils.dataMap(await _apiClient.get(SupervisorEndpoints.visitDetail(visitId)));
+  }
+
+  Future<Map<String, dynamic>> createVisit(Map<String, dynamic> body) async {
+    return ResponseUtils.dataMap(await _apiClient.post(SupervisorEndpoints.visits, body: body));
+  }
+
+  // ── Risk Cases ────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getRiskCases() async {
+    return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.riskCases));
+  }
+
+  // ── Educational Supervisions ──────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getEducationalSupervisions() async {
+    return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.educationalSupervisions));
+  }
+
+  // ── Parent Contacts ───────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getParentContacts() async {
+    return ResponseUtils.list(await _apiClient.get(SupervisorEndpoints.parentContacts));
+  }
+
+  Future<Map<String, dynamic>> createParentContact(Map<String, dynamic> body) async {
+    return ResponseUtils.dataMap(await _apiClient.post(SupervisorEndpoints.parentContacts, body: body));
+  }
+
+  // ── Reports ───────────────────────────────────────────────────
+
+  Future<List<Map<String, dynamic>>> getReports({Map<String, String>? filters}) async {
+    String path = SupervisorEndpoints.reports;
+    if (filters != null && filters.isNotEmpty) {
+      final query = Uri(queryParameters: filters).query;
+      path = '$path?$query';
+    }
+    return ResponseUtils.list(await _apiClient.get(path));
+  }
+}

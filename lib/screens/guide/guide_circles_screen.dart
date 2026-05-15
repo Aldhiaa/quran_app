@@ -1,54 +1,75 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
+import '../../providers/guide_provider.dart';
 import '../../widgets/common_widgets.dart';
 
-class GuideCirclesScreen extends StatelessWidget {
+class GuideCirclesScreen extends StatefulWidget {
   const GuideCirclesScreen({super.key});
+  @override
+  State<GuideCirclesScreen> createState() => _GuideCirclesScreenState();
+}
+
+class _GuideCirclesScreenState extends State<GuideCirclesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<GuideProvider>().loadCircles();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
-    final circles = [
-      _C('حلقة النور', 'مركز الإيمان', .92, BadgeKind.success),
-      _C('حلقة الفجر', 'مركز التقوى', .85, BadgeKind.success),
-      _C('حلقة الإسراء', 'مركز السلام', .76, BadgeKind.success),
-      _C('حلقة الفلق', 'مركز الرشاد', .55, BadgeKind.warning),
-      _C('حلقة النحل', 'مركز الصدق', .38, BadgeKind.danger),
-    ];
+    final guide = context.watch<GuideProvider>();
 
     return GreenHeaderScaffold(
       title: 'مراقبة الحلقات',
-      headerExtra: SearchFilterBar(hint: 'بحث', onChanged: (_) {}),
-      child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-        itemCount: circles.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, i) => AppCard(
-          child: Row(children: [
-            ProgressRing(value: circles[i].progress, size: 54, strokeWidth: 7),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(circles[i].name, style: const TextStyle(fontWeight: FontWeight.w800)),
-                  const SizedBox(height: 3),
-                  Text(circles[i].center,
-                      style: const TextStyle(color: AppColors.muted, fontSize: 12.5)),
-                ],
-              ),
+      headerExtra: SearchFilterBar(hint: 'بحث عن حلقة', onChanged: (_) {}),
+      child: guide.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                if (guide.error != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: AppErrorState(message: guide.error!),
+                  ),
+                if (guide.circles.isEmpty && !guide.isLoading)
+                  const AppEmptyState(message: 'لا توجد حلقات')
+                else
+                  ...guide.circles.map((c) => Padding(
+                        padding: const EdgeInsets.only(bottom: 10),
+                        child: AppCard(
+                          child: Row(children: [
+                            ProgressRing(
+                              value: ((c['active_students_count'] ?? 0) / 30).clamp(0.0, 1.0),
+                              size: 48,
+                              strokeWidth: 5,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text('${c['name'] ?? ''}',
+                                      style: const TextStyle(fontWeight: FontWeight.w800)),
+                                  const SizedBox(height: 3),
+                                  Text('${c['center']['name'] ?? c['teacher']['full_name'] ?? ''}',
+                                      style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                                ],
+                              ),
+                            ),
+                            StatusBadge(
+                              text: '${c['active_students_count'] ?? 0} طالبة',
+                              kind: BadgeKind.info,
+                            ),
+                          ]),
+                        ),
+                      )),
+              ],
             ),
-            StatusBadge(text: '${(circles[i].progress * 100).round()}٪', kind: circles[i].kind),
-          ]),
-        ),
-      ),
     );
   }
-}
-
-class _C {
-  final String name;
-  final String center;
-  final double progress;
-  final BadgeKind kind;
-  const _C(this.name, this.center, this.progress, this.kind);
 }

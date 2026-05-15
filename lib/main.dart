@@ -82,6 +82,7 @@ import 'package:quran_mobile_ui/screens/guide/guide_training_plan_screen.dart';
 import 'package:quran_mobile_ui/screens/guide/guide_recommendations_screen.dart';
 import 'package:quran_mobile_ui/screens/guide/guide_monthly_approval_screen.dart';
 import 'package:quran_mobile_ui/screens/guide/guide_reports_screen.dart';
+import 'package:quran_mobile_ui/screens/guide/guide_center_detail_screen.dart';
 import 'package:quran_mobile_ui/screens/settings/app_settings_screen.dart';
 import 'package:quran_mobile_ui/screens/settings/profile_screen.dart';
 import 'package:quran_mobile_ui/screens/settings/support_screen.dart';
@@ -246,6 +247,7 @@ class QuranApp extends StatelessWidget {
           '/guide/recommendations': (context) => const GuideRecommendationsScreen(),
           '/guide/monthly-tests': (context) => const GuideMonthlyApprovalScreen(),
           '/guide/reports': (context) => const GuideReportsScreen(),
+          '/guide/center-detail': (context) => const GuideCenterDetailScreen(),
           // Settings
           '/settings/app': (context) => const AppSettingsScreen(),
           '/settings/profile': (context) => const ProfileScreen(),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
+import '../../providers/guide_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class GuideModelCircleEvaluationScreen extends StatefulWidget {
@@ -9,7 +11,16 @@ class GuideModelCircleEvaluationScreen extends StatefulWidget {
       _GuideModelCircleEvaluationScreenState();
 }
 
-class _GuideModelCircleEvaluationScreenState extends State<GuideModelCircleEvaluationScreen> {
+class _GuideModelCircleEvaluationScreenState
+    extends State<GuideModelCircleEvaluationScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<GuideProvider>().loadVisits();
+    });
+  }
+
   static const _criteria = [
     'البنية التحتية والمكان',
     'مستوى الطالبات والتقدم',
@@ -17,20 +28,34 @@ class _GuideModelCircleEvaluationScreenState extends State<GuideModelCircleEvalu
     'الالتزام الإداري والإشرافي',
     'الإبداع والتجديد في التعليم',
   ];
+
   late List<int> _scores;
+  bool _isSubmitting = false;
 
   @override
-  void initState() {
-    super.initState();
-    _scores = List<int>.filled(_criteria.length, 0);
+  void dispose() {
+    super.dispose();
   }
 
   int get _total => _scores.fold(0, (a, b) => a + b);
 
+  Future<void> _submit() async {
+    setState(() => _isSubmitting = true);
+    await Future.delayed(const Duration(seconds: 1));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تم حفظ التقييم')),
+      );
+      setState(() => _isSubmitting = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
+    _scores ??= List<int>.filled(_criteria.length, 0);
     final maxTotal = _criteria.length * 5;
     final pct = _total / maxTotal;
+
     return GreenHeaderScaffold(
       title: 'تقييم حلقة نموذجية',
       headerExtra: AppCard(
@@ -39,8 +64,8 @@ class _GuideModelCircleEvaluationScreenState extends State<GuideModelCircleEvalu
         child: Row(children: [
           ProgressRing(
             value: pct,
-            size: 64,
-            strokeWidth: 8,
+            size: 60,
+            strokeWidth: 7,
             color: AppColors.accentGold,
             trackColor: Colors.white.withValues(alpha: .25),
             label: '$_total/$maxTotal',
@@ -51,18 +76,37 @@ class _GuideModelCircleEvaluationScreenState extends State<GuideModelCircleEvalu
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text('حلقة النور',
-                    style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 15)),
+                    style: TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 15)),
                 SizedBox(height: 3),
-                Text('مركز الإيمان • أ. منى السبيعي',
+                Text('مركز الإيمان',
                     style: TextStyle(color: Colors.white70, fontSize: 12)),
-                SizedBox(height: 6),
-                StarRating(value: 4),
               ],
             ),
           ),
         ]),
       ),
-      bottomNavigationBar: const DraftSubmitBar(),
+      bottomNavigationBar: Padding(
+        padding: const EdgeInsets.all(16),
+        child: ElevatedButton.icon(
+          onPressed: _isSubmitting ? null : _submit,
+          icon: _isSubmitting
+              ? const SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(strokeWidth: 2))
+              : const Icon(Icons.save_rounded),
+          label: const Text('حفظ التقييم',
+              style: TextStyle(fontWeight: FontWeight.w800)),
+          style: ElevatedButton.styleFrom(
+            minimumSize: const Size(double.infinity, 50),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppRadius.md)),
+          ),
+        ),
+      ),
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
         itemCount: _criteria.length,
@@ -77,20 +121,30 @@ class _GuideModelCircleEvaluationScreenState extends State<GuideModelCircleEvalu
                   width: 26,
                   height: 26,
                   decoration: BoxDecoration(
-                    color: AppColors.accentGold.withValues(alpha: .2),
+                    color: AppColors.primary.withValues(alpha: .12),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
                   child: Text('${i + 1}',
-                      style: const TextStyle(color: AppColors.primaryDark, fontWeight: FontWeight.w800)),
+                      style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.w800)),
                 ),
                 const SizedBox(width: 10),
-                Expanded(child: Text(_criteria[i], style: const TextStyle(fontWeight: FontWeight.w700))),
+                Expanded(
+                    child: Text(_criteria[i],
+                        style: const TextStyle(fontWeight: FontWeight.w700))),
                 Text('${_scores[i]} / 5',
-                    style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.w800)),
+                    style: const TextStyle(
+                        color: AppColors.primary,
+                        fontWeight: FontWeight.w800)),
               ]),
               const SizedBox(height: 10),
-              RatingSelector(max: 5, value: _scores[i], onChanged: (v) => setState(() => _scores[i] = v)),
+              RatingSelector(
+                max: 5,
+                value: _scores[i],
+                onChanged: (v) => setState(() => _scores[i] = v),
+              ),
             ],
           ),
         ),

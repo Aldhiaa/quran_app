@@ -99,5 +99,17 @@ class GuideService {
   Future<Map<String, dynamic>> createTrainingWorkshop(Map<String, dynamic> body) async {
     return ResponseUtils.dataMap(await _apiClient.post(GuideEndpoints.trainingPlan, body: body));
   }
+
+  Future<List<Map<String, dynamic>>> getEducationalSupervisions() async {
+    return ResponseUtils.list(await _apiClient.get(GuideEndpoints.educationalSupervisions));
+  }
+
+  Future<List<Map<String, dynamic>>> getRecommendations() async {
+    return ResponseUtils.list(await _apiClient.get(GuideEndpoints.recommendations));
+  }
+
+  Future<Map<String, dynamic>> getReportsData() async {
+    return ResponseUtils.dataMap(await _apiClient.get(GuideEndpoints.reports));
+  }
 }
 

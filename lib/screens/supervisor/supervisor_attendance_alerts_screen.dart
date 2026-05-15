@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../core/app_theme.dart';
+import '../../providers/supervisor_provider.dart';
 import '../../widgets/common_widgets.dart';
 
 class SupervisorAttendanceAlertsScreen extends StatefulWidget {
@@ -12,105 +14,111 @@ class _SupervisorAttendanceAlertsScreenState extends State<SupervisorAttendanceA
   int _filter = 0;
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) context.read<SupervisorProvider>().loadAttendanceAlerts();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final alerts = [
-      _A('فيصل الزهراني', '7 أيام متتالية', 'مركز النور — حلقة البقرة', BadgeKind.danger, 'حرج'),
-      _A('سعد الشهري', '3 أيام متتالية', 'مركز النور — حلقة آل عمران', BadgeKind.warning, 'تنبيه'),
-      _A('محمد الدوسري', 'حضور ٪40 خلال الشهر', 'مركز الفرقان — حلقة النساء', BadgeKind.warning, 'متابعة'),
-      _A('عبدالله القحطاني', '2 أيام متتالية', 'مركز النور — حلقة آل عمران', BadgeKind.neutral, 'مراقبة'),
-    ];
+    final sup = context.watch<SupervisorProvider>();
+    final alerts = sup.attendanceAlerts;
+
+    final criticalCount = alerts.where((a) => a['alert_level'] == 'critical').length;
+    final warningCount = alerts.where((a) => a['alert_level'] == 'warning').length;
 
     return GreenHeaderScaffold(
       title: 'تنبيهات الحضور',
       headerExtra: AppCard(
         color: Colors.white.withValues(alpha: .12),
         padding: const EdgeInsets.all(12),
-        child: Row(children: const [
-          Expanded(child: _Stat(label: 'حرج', value: '1', color: AppColors.danger, icon: Icons.report_problem_rounded)),
-          SizedBox(width: 8),
-          Expanded(child: _Stat(label: 'تنبيهات', value: '3', color: AppColors.warning, icon: Icons.warning_amber_rounded)),
-          SizedBox(width: 8),
-          Expanded(child: _Stat(label: 'مهام مفتوحة', value: '7', color: AppColors.info, icon: Icons.task_alt_rounded)),
+        child: Row(children: [
+          Expanded(child: _Stat(label: 'حرج', value: '$criticalCount', color: AppColors.danger, icon: Icons.report_problem_rounded)),
+          const SizedBox(width: 8),
+          Expanded(child: _Stat(label: 'تنبيهات', value: '$warningCount', color: AppColors.warning, icon: Icons.warning_amber_rounded)),
+          const SizedBox(width: 8),
+          Expanded(child: _Stat(label: 'حلقات', value: '${alerts.length}', color: AppColors.info, icon: Icons.menu_book_rounded)),
         ]),
       ),
-      child: ListView(
-        padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
-        children: [
-          FilterChipsBar(
-            items: const ['الكل', 'حرج', 'تنبيه', 'متابعة'],
-            selected: _filter,
-            onChanged: (i) => setState(() => _filter = i),
-          ),
-          const SizedBox(height: 12),
-          ...alerts.map((a) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: AppCard(
-                  child: Row(children: [
-                    Container(
-                      width: 8,
-                      height: 64,
-                      decoration: BoxDecoration(
-                        color: badgeColor(a.kind),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(children: [
-                            Expanded(
-                              child: Text(a.name,
-                                  style: const TextStyle(fontWeight: FontWeight.w800)),
-                            ),
-                            StatusBadge(text: a.status, kind: a.kind),
-                          ]),
-                          const SizedBox(height: 4),
-                          Text(a.reason,
-                              style: TextStyle(
-                                  color: badgeColor(a.kind), fontWeight: FontWeight.w700, fontSize: 12.5)),
-                          const SizedBox(height: 2),
-                          Text(a.where, style: const TextStyle(color: AppColors.muted, fontSize: 12)),
-                          const SizedBox(height: 8),
-                          Row(children: [
-                            OutlinedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.phone_rounded, size: 16),
-                              label: const Text('اتصال'),
-                              style: OutlinedButton.styleFrom(
-                                  minimumSize: const Size(0, 36),
-                                  padding: const EdgeInsets.symmetric(horizontal: 10)),
-                            ),
-                            const SizedBox(width: 8),
-                            ElevatedButton.icon(
-                              onPressed: () {},
-                              icon: const Icon(Icons.task_alt_rounded, size: 16, color: Colors.white),
-                              label: const Text('إنشاء مهمة'),
-                              style: ElevatedButton.styleFrom(
-                                  minimumSize: const Size(0, 36),
-                                  padding: const EdgeInsets.symmetric(horizontal: 12)),
-                            ),
-                          ]),
-                        ],
-                      ),
-                    ),
-                  ]),
+      child: sup.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 24),
+              children: [
+                FilterChipsBar(
+                  items: const ['الكل', 'حرج', 'تنبيه', 'متابعة'],
+                  selected: _filter,
+                  onChanged: (i) => setState(() => _filter = i),
                 ),
-              )),
-        ],
-      ),
+                const SizedBox(height: 12),
+                ...alerts.map((a) => Padding(
+                      padding: const EdgeInsets.only(bottom: 10),
+                      child: AppCard(
+                        child: Row(children: [
+                          Container(
+                            width: 8,
+                            height: 64,
+                            decoration: BoxDecoration(
+                              color: a['alert_level'] == 'critical' ? AppColors.danger : AppColors.warning,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(children: [
+                                  Expanded(
+                                    child: Text('${a['circle_name'] ?? ''}',
+                                        style: const TextStyle(fontWeight: FontWeight.w800)),
+                                  ),
+                                  StatusBadge(
+                                    text: a['alert_level'] == 'critical' ? 'حرج' : 'تنبيه',
+                                    kind: a['alert_level'] == 'critical' ? BadgeKind.danger : BadgeKind.warning,
+                                  ),
+                                ]),
+                                const SizedBox(height: 4),
+                                Text('المعلم: ${a['teacher'] ?? ''}',
+                                    style: const TextStyle(
+                                        color: a['alert_level'] == 'critical' ? AppColors.danger : AppColors.warning,
+                                        fontWeight: FontWeight.w700,
+                                        fontSize: 12.5)),
+                                const SizedBox(height: 2),
+                                Text('نسبة الحضور: ${a['attendance_rate']}%',
+                                    style: const TextStyle(color: AppColors.muted, fontSize: 12)),
+                                const SizedBox(height: 8),
+                                Row(children: [
+                                  OutlinedButton.icon(
+                                    onPressed: () {},
+                                    icon: const Icon(Icons.visibility_rounded, size: 16),
+                                    label: const Text('عرض'),
+                                    style: OutlinedButton.styleFrom(
+                                        minimumSize: const Size(0, 36),
+                                        padding: const EdgeInsets.symmetric(horizontal: 10)),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  ElevatedButton.icon(
+                                    onPressed: () {},
+                                    icon: const Icon(Icons.task_alt_rounded, size: 16, color: Colors.white),
+                                    label: const Text('إنشاء مهمة'),
+                                    style: ElevatedButton.styleFrom(
+                                        minimumSize: const Size(0, 36),
+                                        padding: const EdgeInsets.symmetric(horizontal: 12)),
+                                  ),
+                                ]),
+                              ],
+                            ),
+                          ),
+                        ]),
+                      ),
+                    )),
+              ],
+            ),
     );
   }
-}
-
-class _A {
-  final String name;
-  final String reason;
-  final String where;
-  final BadgeKind kind;
-  final String status;
-  const _A(this.name, this.reason, this.where, this.kind, this.status);
 }
 
 class _Stat extends StatelessWidget {
