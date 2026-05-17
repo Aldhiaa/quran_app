@@ -46,14 +46,14 @@ class _GuideCenterDetailScreenState extends State<GuideCenterDetailScreen> {
                       const SizedBox(height: 10),
                       InfoTile(
                         icon: Icons.location_on_rounded,
-                        label: 'الفرع',
-                        value: '${center['branch']['name'] ?? ''}',
+                        title: 'الفرع',
+                        subtitle: '${center['branch']?['name'] ?? ''}',
                       ),
                       const Divider(),
                       InfoTile(
                         icon: Icons.menu_book_rounded,
-                        label: 'عدد الحلقات',
-                        value: '${circles.length}',
+                        title: 'عدد الحلقات',
+                        subtitle: '${circles.length}',
                       ),
                     ],
                   ),
