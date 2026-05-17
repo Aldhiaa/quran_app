@@ -57,7 +57,7 @@ class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
         color: Colors.white.withValues(alpha: .12),
         padding: const EdgeInsets.all(12),
         child: Row(children: [
-          const Icon(Icons.calendar_week_rounded, color: AppColors.accentGold),
+          const Icon(Icons.calendar_view_week_rounded, color: AppColors.accentGold),
           const SizedBox(width: 8),
           const Text('هذا الأسبوع',
               style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700)),
@@ -66,8 +66,8 @@ class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
             value: percentage,
             size: 36,
             strokeWidth: 4,
-            backgroundColor: Colors.white24,
-            progressColor: percentage >= 0.7 ? AppColors.success : AppColors.warning,
+            trackColor: Colors.white24,
+            color: percentage >= 0.7 ? AppColors.success : AppColors.warning,
           ),
           const SizedBox(width: 8),
           Text('$totalScore / $maxScore',
@@ -131,7 +131,6 @@ class _WeeklyEvaluationScreenState extends State<WeeklyEvaluationScreen> {
                     RatingSelector(
                       value: _scores[i],
                       max: max,
-                      step: 1,
                       onChanged: (v) => setState(() => _scores[i] = v),
                     ),
                   ],

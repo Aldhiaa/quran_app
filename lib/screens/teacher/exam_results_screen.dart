@@ -59,8 +59,8 @@ class ExamResultsScreen extends StatelessWidget {
             value: avgScore / 100,
             size: 50,
             strokeWidth: 5,
-            backgroundColor: Colors.white24,
-            progressColor: Colors.white,
+            trackColor: Colors.white24,
+            color: Colors.white,
           ),
           const SizedBox(width: 14),
           const Expanded(
