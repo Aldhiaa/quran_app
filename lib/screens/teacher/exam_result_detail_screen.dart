@@ -52,7 +52,7 @@ class ExamResultDetailScreen extends StatelessWidget {
           ),
           Column(children: [
             ProgressRing(value: percentage, size: 40, strokeWidth: 4,
-                backgroundColor: Colors.white24, progressColor: Colors.white),
+                trackColor: Colors.white24, color: Colors.white),
             const SizedBox(height: 2),
             Text('$total',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 14)),
@@ -141,7 +141,7 @@ class ExamResultDetailScreen extends StatelessWidget {
                   ],
                 ),
               ),
-              const StarRating(rating: 4, size: 18),
+              const StarRating(value: 4, size: 18),
             ]),
           ),
 

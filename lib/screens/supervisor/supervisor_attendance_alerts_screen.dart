@@ -82,7 +82,7 @@ class _SupervisorAttendanceAlertsScreenState extends State<SupervisorAttendanceA
                                 ]),
                                 const SizedBox(height: 4),
                                 Text('المعلم: ${a['teacher'] ?? ''}',
-                                    style: const TextStyle(
+                                    style: TextStyle(
                                         color: a['alert_level'] == 'critical' ? AppColors.danger : AppColors.warning,
                                         fontWeight: FontWeight.w700,
                                         fontSize: 12.5)),

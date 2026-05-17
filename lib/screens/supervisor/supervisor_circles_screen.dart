@@ -67,7 +67,7 @@ class _SupervisorCirclesScreenState extends State<SupervisorCirclesScreen> {
                             ),
                           ),
                           if (c['teacher'] is Map)
-                            StatusBadge(text: '${c['teacher']?.['full_name'] ?? ''}', kind: BadgeKind.info),
+                            StatusBadge(text: '${(c['teacher'] as Map)['full_name'] ?? ''}', kind: BadgeKind.info),
                         ],
                       ),
                     );

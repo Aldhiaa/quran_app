@@ -77,7 +77,7 @@ class _GradesEntryScreenState extends State<GradesEntryScreen> {
             ),
           ),
           ProgressRing(value: percentage, size: 40, strokeWidth: 4,
-              backgroundColor: Colors.white24, progressColor: Colors.white),
+              trackColor: Colors.white24, color: Colors.white),
           const SizedBox(width: 8),
           Text('$totalScore',
               style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w800, fontSize: 16)),
