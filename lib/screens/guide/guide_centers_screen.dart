@@ -54,7 +54,7 @@ class _GuideCentersScreenState extends State<GuideCentersScreen> {
                     child: AppErrorState(message: guide.error!),
                   ),
                 if (filtered.isEmpty && !guide.isLoading)
-                  const AppEmptyState(message: 'لا توجد مراكز')
+                  const AppEmptyState(title: 'لا توجد مراكز')
                 else
                   ...filtered.map((c) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),

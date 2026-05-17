@@ -37,7 +37,7 @@ class _GuideCirclesScreenState extends State<GuideCirclesScreen> {
                     child: AppErrorState(message: guide.error!),
                   ),
                 if (guide.circles.isEmpty && !guide.isLoading)
-                  const AppEmptyState(message: 'لا توجد حلقات')
+                  const AppEmptyState(title: 'لا توجد حلقات')
                 else
                   ...guide.circles.map((c) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),

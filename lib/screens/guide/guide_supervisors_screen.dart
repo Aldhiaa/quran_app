@@ -52,7 +52,7 @@ class _GuideSupervisorsScreenState extends State<GuideSupervisorsScreen> {
                     child: AppErrorState(message: guide.error!),
                   ),
                 if (filtered.isEmpty && !guide.isLoading)
-                  const AppEmptyState(message: 'لا توجد مشرفات')
+                  const AppEmptyState(title: 'لا توجد مشرفات')
                 else
                   ...filtered.map((s) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),

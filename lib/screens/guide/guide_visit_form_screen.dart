@@ -24,6 +24,15 @@ class _GuideVisitFormScreenState extends State<GuideVisitFormScreen> {
 
   bool _isSubmitting = false;
 
+  final List<String> _items = const [
+    'انتظام الحضور',
+    'الالتزام بالخطة',
+    'جودة التحفيظ',
+    'تفاعل الطالبات',
+    'بيئة الحلقة',
+  ];
+  late final List<bool> _checks = List<bool>.filled(_items.length, false);
+
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
@@ -42,13 +51,6 @@ class _GuideVisitFormScreenState extends State<GuideVisitFormScreen> {
     _recommendationsController.dispose();
     _centerController.dispose();
     _circleController.dispose();
-    super.dispose();
-  }
-
-  @override
-  void dispose() {
-    _notesController.dispose();
-    _recommendationsController.dispose();
     super.dispose();
   }
 

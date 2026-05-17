@@ -61,7 +61,7 @@ class _GuideVisitsScreenState extends State<GuideVisitsScreen> {
                     child: AppErrorState(message: guide.error!),
                   ),
                 if (filtered.isEmpty && !guide.isLoading)
-                  const AppEmptyState(message: 'لا توجد زيارات')
+                  const AppEmptyState(title: 'لا توجد زيارات')
                 else
                   ...filtered.map((v) => Padding(
                         padding: const EdgeInsets.only(bottom: 10),
